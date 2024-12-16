@@ -24,7 +24,7 @@ This repository contains the following items:
   * `MILP_Algorithm.py`: this file contains the code of the MILP algorithm, that solve the vehicle charging planning problem without considering uncertainty. This algorithm is used as baseline for the experiments.
   * `Genetic_Algorithm.py `: this file contains the code of the original genetic algorithm, that solve the vehicle charging planning problem considering uncertainty.
   * `ClasesAG.py`: this file contains the functions that the new Genetic Statistical Model Checking Algorithm (GSMCA) needs to work.
-  * `ClasesAG.py`: this file contains the code to run the new version of the genetic algorithm using Python.
+  * `RunGA.py`: this file contains the code to run the new version of the genetic algorithm using Python.
 * `JavaAlgorithms`: this folder contains the Java project where de  is implemented. In the src package we can find three files:
   * `ExecuteGeneticAlgorithm.java`: this file handles the execution of the GSMCA.
   * `ExecuteMILP.java`: this file is responsible for launching the MILP algorithm from Java.
