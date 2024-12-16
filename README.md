@@ -8,7 +8,7 @@ This paper introduces a method for task-based CPS planning that combines genetic
 ## Dependencies
 
 The project is implemented using the latest version of Python (3.12.1) and Java (JDK23). 
-Thie Java project relies on the following libraries and tools to function correctly:
+The Java project relies on the following libraries and tools to function correctly:
 1. **Jython**: A Java implementation of Python, required to bridge the execution of Python scripts within the Java environment. Ensure that `jython-standalone-X.X.X.jar` is included in the project build path.
 2. **PRISM Library**: The project utilizes PRISM, a probabilistic model checker, including its components such as `Prism`, `PrismLog`, and related modules for parsing models (`parser.ast`), simulating modules (`simulator`), and handling properties files. To execute the project you must have the PRISM libraries integrated and accessible in the project setup. For more information check https://github.com/prismmodelchecker/prism-api and https://github.com/prismmodelchecker/prism prism.
 
