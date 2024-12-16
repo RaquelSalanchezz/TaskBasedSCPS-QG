@@ -1,0 +1,5 @@
+// Propiedad para calcular el coste esperado total de carga
+R{"total_cost"} =? [ F (current_time = TOTAL_HOURS) ]
+
+// Propiedad para calcular el valor esperado de timespan al final de la simulación
+R{"charging_timespan"} =? [ F (current_time = TOTAL_HOURS) ]
