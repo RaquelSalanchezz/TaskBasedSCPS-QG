@@ -13,16 +13,15 @@ This repository contains the following items:
 * `PythonFiles`: this folder contains four files where we can find the clases and the functions needed to execute the algorithms.  
   * `MILP_Algorithm.py`: this file contains the code of the MILP algorithm, that solve the vehicle charging planning problem without considering uncertainty. This algorithm is used as baseline for the experiments.
   * `Genetic_Algorithm.py  `: this file contains the code of the original genetic algorithm, that solve the vehicle charging planning problem considering uncertainty.
-  * `ClasesAG.py  `: this file contains the functions that the new genetic algorithm needs to work.
-  * `ClasesAG.py  `: this file contains the code to run the new version of the genetic algorithm using Python.
-* `JavaAlgorithms`: this folder contains the Java project .
-  * `ExecuteGA.java`: this file contains the code of the MILP algorithm, that solve the vehicle charging planning problem without considering uncertainty. This algorithm is used as baseline for the experiments.
-  * `ExecuteMILP.java`: this file contains the code of the original genetic algorithm, that solve the vehicle charging planning problem considering uncertainty.
-  * `ModelCheckFromFiles.java`: this file contains the functions that the new genetic algorithm needs to work.
+  * `ClasesAG.py`: this file contains the functions that the new genetic algorithm needs to work.
+  * `ClasesAG.py`: this file contains the code to run the new version of the genetic algorithm using Python.
+* `JavaAlgorithms`: this folder contains the Java project. In the src package we can find three files:
+  * `ExecuteGeneticAlgorithm.java`: this file handles the execution of the genetic algorithm from Java.
+  * `ExecuteMILP.java`: this file is responsible for launching the MILP algorithm from Java.
+  * `ModelCheckFromFiles.java`: this file is responsible for evaluate the model launching PRISM. It consist on a version of a PRISM API example adapted to our project.
 *  `Vehicles_Data`: in this folder we can find the data files used to run the experiments.
     * `example_vehicle_objects.txt`: code that contains the data you can modify and add to the algoritms code to conduct experiments. You can copy and paste all the content or part of it directly in the code.
-    * `vehicles.txt`: data files used to run the algorithms in the experiments. These are files external to the code.
-    
+    * `vehicles.txt`: data files used to run the algorithms in the experiments. These are files external to the code.   
 * `evaluation_charts.ypinb`: code used to generate the evaluation charts included in the paper.
 
 
