@@ -31,7 +31,7 @@ This repository contains the following items:
   * `ModelCheckFromFiles.java`: this file is responsible for evaluate the model launching PRISM. It consist on a version of a PRISM API example adapted to our project.
 *  `Vehicles_Data`: in this folder we can find the data files used to run the experiments.
     * `example_vehicle_objects.txt`: code that contains the data you can modify and add to the algoritms code to conduct experiments. You can copy and paste all the content or part of it directly in the code.
-    * `vehicles.txt`: data files used to run the algorithms in the experiments. These are files external to the code.   
+    * `vehicles.txt` and `vehiclesdata.txt`: data files used to run the algorithms in the experiments. These are files external to the code.   
 * `evaluation_charts.ypinb`: code used to generate the evaluation charts included in the paper.
 
 
