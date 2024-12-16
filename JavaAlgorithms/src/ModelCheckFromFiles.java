@@ -6,7 +6,7 @@
 //	
 //------------------------------------------------------------------------------
 //	
-//	This file is part of PRISM.
+//	This file is a version of a part of PRISM API.
 //	
 //	PRISM is free software; you can redistribute it and/or modify
 //	it under the terms of the GNU General Public License as published by
