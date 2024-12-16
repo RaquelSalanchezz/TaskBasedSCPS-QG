@@ -21,9 +21,6 @@ This repository contains the following items:
     * `vehicles.txt`: data files used to run the algorithms in the experiments. These are files external to the code.
     
 * `evaluation_charts.ypinb`: code used to generate the evaluation charts included in the paper.
-* `correlation.ypinb`: code used to evaluate the correlation analysis between variables.
-* `Test_results`: this folder contains other two folders that include the results of the executions for the algorithm tests in the two case studies.
-
 
 
 ## Running the Experiments
