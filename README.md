@@ -52,7 +52,7 @@ To run the code, you need to do it within Eclipse IDE for Java and Visual Studio
 2. **Verify the Path to the Python File (`execfile`)**
    - Double-check that the line executing the Python script uses the correct path in the following format:
      ```java
-     interpreter.execfile("C:\\Users\\usuario\\Escritorio\\project\\algoritmoMILP.py");
+     interpreter.execfile("C:\\Users\\usuario\\Escritorio\\project\\MILPAlgorithm.py");
      ```
    - Ensure the file `algoritmoMILP.py` exists in the specified location.
 
@@ -70,7 +70,7 @@ To run the genetic algorithm you shoud follow the same stages described in the p
 2. **Verify the Paths to the Python Files**
    - Double-check that the lines executing the Python scripts and functions use the correct paths in the following format:
      ```java
-     interpreter.execfile("C:\\Users\\usuario\\Escritorio\\project\\algoritmoMILP.py");
+     interpreter.execfile("C:\\Users\\usuario\\Escritorio\\project\\geneticAlgorithm.py");
      ```
    - Ensure the Python files (clasesAG.py and runGA.py) exist in the specified location.
      
