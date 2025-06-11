@@ -1,0 +1,254 @@
+dtmc
+
+// Constantes del sistema
+const int N = 1;
+const int M = 3;
+const int charge_rate = 10;
+
+const int MAX_BAT = 100;
+
+const int NOT_AVAILABLE = 0;
+const int CHARGING = 1;
+const int CHARGED = 2;
+
+const int FREE = 0;
+const int OCCUPIED = 1;
+const int BROKEN = 2;
+
+// Seguimiento del tiempo
+const int TOTAL_HOURS = 240;
+global current_time : [0..TOTAL_HOURS] init 0;
+global phase : [0..M] init 0;
+global start_time : [0..TOTAL_HOURS] init TOTAL_HOURS;
+global end_time : [0..TOTAL_HOURS] init 0;
+
+module time
+    passturn_time: bool init false;
+
+    [] (phase=0) & (!passturn_time) & (current_time < TOTAL_HOURS) ->
+        (current_time' = current_time + 1) & (passturn_time' = true);
+
+    [] (passturn_time) -> (phase' = 1) & (passturn_time' = false);
+endmodule
+
+module vehiculo1
+    passturn_vehiculo1: bool init false;
+    start_time_vehiculo1 : [0..TOTAL_HOURS] init TOTAL_HOURS;
+    end_time_vehiculo1 : [0..TOTAL_HOURS] init 0;
+
+    v1_update_timespan : bool init false;
+    v1_charge_status : [NOT_AVAILABLE..CHARGED] init NOT_AVAILABLE;
+    v1_batery_situation : [0..100] init 20;
+    v1_start_time : [0..TOTAL_HOURS] init 10;
+    v1_end_time : [0..TOTAL_HOURS] init 17;
+
+    v1_initialization_init_done: bool init false;
+
+    v1_initialization_end_done: bool init false;
+
+    [] (!v1_initialization_init_done) ->
+        0.1 : (v1_start_time' = max(0, floor(10 - 2 * 0.5))) & (v1_initialization_init_done' = true) +
+        0.2 : (v1_start_time' = max(0, floor(10 - 0.5))) & (v1_initialization_init_done' = true) +
+        0.4 : (v1_start_time' = 10) & (v1_initialization_init_done' = true) +
+        0.2 : (v1_start_time' = min(TOTAL_HOURS, floor(10 + 0.5))) & (v1_initialization_init_done' = true) +
+        0.1 : (v1_start_time' = min(TOTAL_HOURS, floor(10 + 2 * 0.5))) & (v1_initialization_init_done' = true); 
+
+    [] (!v1_initialization_end_done) ->
+        0.1 : (v1_end_time' = max(0, floor(17 - 2 * 0.5))) & (v1_initialization_end_done' = true) +
+        0.2 : (v1_end_time' = max(0, floor(17 - 0.5))) & (v1_initialization_end_done' = true) +
+        0.4 : (v1_end_time' = 17) & (v1_initialization_end_done' = true) +
+        0.2 : (v1_end_time' = min(TOTAL_HOURS, floor(17 + 0.5))) & (v1_initialization_end_done' = true) +
+        0.1 : (v1_end_time' = min(TOTAL_HOURS, floor(17 + 2 * 0.5))) & (v1_initialization_end_done' = true); 
+
+    [] (phase=1) & (!passturn_vehiculo1) & (v1_initialization_end_done) & (v1_initialization_init_done) & (current_time < v1_start_time | v1_charge_status = CHARGED)->
+        (passturn_vehiculo1' = true);
+
+    [start_charge1] (phase=1) & (!passturn_vehiculo1) & (v1_initialization_end_done) & (v1_initialization_init_done) & (current_time = v1_start_time & v1_charge_status != CHARGING & v1_batery_situation < MAX_BAT)->
+        (v1_charge_status' = CHARGING) & (v1_batery_situation' = min(v1_batery_situation + charge_rate, MAX_BAT)) & (passturn_vehiculo1' = true) & (start_time_vehiculo1' = min(start_time, current_time));
+
+    [] (phase=1) & (!passturn_vehiculo1) & (v1_initialization_end_done) & (v1_initialization_init_done) & (v1_charge_status = CHARGING) & (v1_batery_situation < MAX_BAT) & (current_time > v1_start_time) & (current_time < v1_end_time) ->
+        (v1_batery_situation' = min(v1_batery_situation + charge_rate, MAX_BAT)) & (passturn_vehiculo1' = true);
+
+    [wait_for_charge1] (phase=1) & (!passturn_vehiculo1) & (v1_initialization_end_done) & (v1_initialization_init_done) & (current_time = v1_start_time & v1_charge_status != CHARGING & v1_batery_situation < MAX_BAT) ->    (v1_start_time' = min(v1_start_time + 2, v1_end_time-1));
+
+    [release_charge1] (phase=1) & (!passturn_vehiculo1) & (v1_initialization_end_done) & (v1_initialization_init_done) & (v1_batery_situation = MAX_BAT) & (v1_charge_status = CHARGING) ->
+        (v1_charge_status' = CHARGED) & (passturn_vehiculo1' = true) & (end_time_vehiculo1' = max(end_time, current_time)) & (v1_update_timespan' = true);
+
+    [release_charge1] (phase=1) & (!passturn_vehiculo1) & (v1_initialization_end_done) & (v1_initialization_init_done) & (current_time >= v1_end_time) & (v1_batery_situation < MAX_BAT) & (v1_charge_status = CHARGING) ->
+        (v1_charge_status' = NOT_AVAILABLE) & (passturn_vehiculo1' = true) & (v1_update_timespan' = true) & (end_time_vehiculo1' = max(end_time, current_time));
+
+    [] (phase=1) & (!passturn_vehiculo1) & (v1_initialization_end_done) & (v1_initialization_init_done) & (v1_batery_situation = MAX_BAT) & (v1_charge_status != CHARGING) ->
+        (passturn_vehiculo1' = true);
+
+    [] (phase=1) & (!passturn_vehiculo1) & (v1_initialization_end_done) & (v1_initialization_init_done) & (current_time >= v1_end_time) & (v1_batery_situation < MAX_BAT) & (v1_charge_status != CHARGING) ->
+         (passturn_vehiculo1' = true);
+
+     [] (passturn_vehiculo1) -> (phase' = (phase = M ? 0 : phase + 1)) & (passturn_vehiculo1' = false) & (end_time' = v1_update_timespan ? max(end_time, end_time_vehiculo1): end_time) & (start_time' = min(start_time, start_time_vehiculo1));
+endmodule
+
+module vehiculo2
+    passturn_vehiculo2: bool init false;
+    start_time_vehiculo2 : [0..TOTAL_HOURS] init TOTAL_HOURS;
+    end_time_vehiculo2 : [0..TOTAL_HOURS] init 0;
+
+    v2_update_timespan : bool init false;
+    v2_charge_status : [NOT_AVAILABLE..CHARGED] init NOT_AVAILABLE;
+    v2_batery_situation : [0..100] init 20;
+    v2_start_time : [0..TOTAL_HOURS] init 30;
+    v2_end_time : [0..TOTAL_HOURS] init 40;
+
+    v2_initialization_init_done: bool init false;
+
+    v2_initialization_end_done: bool init false;
+
+    [] (!v2_initialization_init_done) ->
+        0.1 : (v2_start_time' = max(0, floor(30 - 2 * 0.5))) & (v2_initialization_init_done' = true) +
+        0.2 : (v2_start_time' = max(0, floor(30 - 0.5))) & (v2_initialization_init_done' = true) +
+        0.4 : (v2_start_time' = 30) & (v2_initialization_init_done' = true) +
+        0.2 : (v2_start_time' = min(TOTAL_HOURS, floor(30 + 0.5))) & (v2_initialization_init_done' = true) +
+        0.1 : (v2_start_time' = min(TOTAL_HOURS, floor(30 + 2 * 0.5))) & (v2_initialization_init_done' = true); 
+
+    [] (!v2_initialization_end_done) ->
+        0.1 : (v2_end_time' = max(0, floor(40 - 2 * 0.5))) & (v2_initialization_end_done' = true) +
+        0.2 : (v2_end_time' = max(0, floor(40 - 0.5))) & (v2_initialization_end_done' = true) +
+        0.4 : (v2_end_time' = 40) & (v2_initialization_end_done' = true) +
+        0.2 : (v2_end_time' = min(TOTAL_HOURS, floor(40 + 0.5))) & (v2_initialization_end_done' = true) +
+        0.1 : (v2_end_time' = min(TOTAL_HOURS, floor(40 + 2 * 0.5))) & (v2_initialization_end_done' = true); 
+
+    [] (phase=2) & (!passturn_vehiculo2) & (v2_initialization_end_done) & (v2_initialization_init_done) & (current_time < v2_start_time | v2_charge_status = CHARGED)->
+        (passturn_vehiculo2' = true);
+
+    [start_charge2] (phase=2) & (!passturn_vehiculo2) & (v2_initialization_end_done) & (v2_initialization_init_done) & (current_time = v2_start_time & v2_charge_status != CHARGING & v2_batery_situation < MAX_BAT)->
+        (v2_charge_status' = CHARGING) & (v2_batery_situation' = min(v2_batery_situation + charge_rate, MAX_BAT)) & (passturn_vehiculo2' = true) & (start_time_vehiculo2' = min(start_time, current_time));
+
+    [] (phase=2) & (!passturn_vehiculo2) & (v2_initialization_end_done) & (v2_initialization_init_done) & (v2_charge_status = CHARGING) & (v2_batery_situation < MAX_BAT) & (current_time > v2_start_time) & (current_time < v2_end_time) ->
+        (v2_batery_situation' = min(v2_batery_situation + charge_rate, MAX_BAT)) & (passturn_vehiculo2' = true);
+
+    [wait_for_charge2] (phase=2) & (!passturn_vehiculo2) & (v2_initialization_end_done) & (v2_initialization_init_done) & (current_time = v2_start_time & v2_charge_status != CHARGING & v2_batery_situation < MAX_BAT) ->    (v2_start_time' = min(v2_start_time + 2, v2_end_time-1));
+
+    [release_charge2] (phase=2) & (!passturn_vehiculo2) & (v2_initialization_end_done) & (v2_initialization_init_done) & (v2_batery_situation = MAX_BAT) & (v2_charge_status = CHARGING) ->
+        (v2_charge_status' = CHARGED) & (passturn_vehiculo2' = true) & (end_time_vehiculo2' = max(end_time, current_time)) & (v2_update_timespan' = true);
+
+    [release_charge2] (phase=2) & (!passturn_vehiculo2) & (v2_initialization_end_done) & (v2_initialization_init_done) & (current_time >= v2_end_time) & (v2_batery_situation < MAX_BAT) & (v2_charge_status = CHARGING) ->
+        (v2_charge_status' = NOT_AVAILABLE) & (passturn_vehiculo2' = true) & (v2_update_timespan' = true) & (end_time_vehiculo2' = max(end_time, current_time));
+
+    [] (phase=2) & (!passturn_vehiculo2) & (v2_initialization_end_done) & (v2_initialization_init_done) & (v2_batery_situation = MAX_BAT) & (v2_charge_status != CHARGING) ->
+        (passturn_vehiculo2' = true);
+
+    [] (phase=2) & (!passturn_vehiculo2) & (v2_initialization_end_done) & (v2_initialization_init_done) & (current_time >= v2_end_time) & (v2_batery_situation < MAX_BAT) & (v2_charge_status != CHARGING) ->
+         (passturn_vehiculo2' = true);
+
+     [] (passturn_vehiculo2) -> (phase' = (phase = M ? 0 : phase + 1)) & (passturn_vehiculo2' = false) & (end_time' = v2_update_timespan ? max(end_time, end_time_vehiculo2): end_time) & (start_time' = min(start_time, start_time_vehiculo2));
+endmodule
+
+module vehiculo3
+    passturn_vehiculo3: bool init false;
+    start_time_vehiculo3 : [0..TOTAL_HOURS] init TOTAL_HOURS;
+    end_time_vehiculo3 : [0..TOTAL_HOURS] init 0;
+
+    v3_update_timespan : bool init false;
+    v3_charge_status : [NOT_AVAILABLE..CHARGED] init NOT_AVAILABLE;
+    v3_batery_situation : [0..100] init 20;
+    v3_start_time : [0..TOTAL_HOURS] init 59;
+    v3_end_time : [0..TOTAL_HOURS] init 159;
+
+    v3_initialization_init_done: bool init false;
+
+    v3_initialization_end_done: bool init false;
+
+    [] (!v3_initialization_init_done) ->
+        0.1 : (v3_start_time' = max(0, floor(59 - 2 * 0.5))) & (v3_initialization_init_done' = true) +
+        0.2 : (v3_start_time' = max(0, floor(59 - 0.5))) & (v3_initialization_init_done' = true) +
+        0.4 : (v3_start_time' = 59) & (v3_initialization_init_done' = true) +
+        0.2 : (v3_start_time' = min(TOTAL_HOURS, floor(59 + 0.5))) & (v3_initialization_init_done' = true) +
+        0.1 : (v3_start_time' = min(TOTAL_HOURS, floor(59 + 2 * 0.5))) & (v3_initialization_init_done' = true); 
+
+    [] (!v3_initialization_end_done) ->
+        0.1 : (v3_end_time' = max(0, floor(159 - 2 * 0.5))) & (v3_initialization_end_done' = true) +
+        0.2 : (v3_end_time' = max(0, floor(159 - 0.5))) & (v3_initialization_end_done' = true) +
+        0.4 : (v3_end_time' = 159) & (v3_initialization_end_done' = true) +
+        0.2 : (v3_end_time' = min(TOTAL_HOURS, floor(159 + 0.5))) & (v3_initialization_end_done' = true) +
+        0.1 : (v3_end_time' = min(TOTAL_HOURS, floor(159 + 2 * 0.5))) & (v3_initialization_end_done' = true); 
+
+    [] (phase=3) & (!passturn_vehiculo3) & (v3_initialization_end_done) & (v3_initialization_init_done) & (current_time < v3_start_time | v3_charge_status = CHARGED)->
+        (passturn_vehiculo3' = true);
+
+    [start_charge3] (phase=3) & (!passturn_vehiculo3) & (v3_initialization_end_done) & (v3_initialization_init_done) & (current_time = v3_start_time & v3_charge_status != CHARGING & v3_batery_situation < MAX_BAT)->
+        (v3_charge_status' = CHARGING) & (v3_batery_situation' = min(v3_batery_situation + charge_rate, MAX_BAT)) & (passturn_vehiculo3' = true) & (start_time_vehiculo3' = min(start_time, current_time));
+
+    [] (phase=3) & (!passturn_vehiculo3) & (v3_initialization_end_done) & (v3_initialization_init_done) & (v3_charge_status = CHARGING) & (v3_batery_situation < MAX_BAT) & (current_time > v3_start_time) & (current_time < v3_end_time) ->
+        (v3_batery_situation' = min(v3_batery_situation + charge_rate, MAX_BAT)) & (passturn_vehiculo3' = true);
+
+    [wait_for_charge3] (phase=3) & (!passturn_vehiculo3) & (v3_initialization_end_done) & (v3_initialization_init_done) & (current_time = v3_start_time & v3_charge_status != CHARGING & v3_batery_situation < MAX_BAT) ->    (v3_start_time' = min(v3_start_time + 2, v3_end_time-1));
+
+    [release_charge3] (phase=3) & (!passturn_vehiculo3) & (v3_initialization_end_done) & (v3_initialization_init_done) & (v3_batery_situation = MAX_BAT) & (v3_charge_status = CHARGING) ->
+        (v3_charge_status' = CHARGED) & (passturn_vehiculo3' = true) & (end_time_vehiculo3' = max(end_time, current_time)) & (v3_update_timespan' = true);
+
+    [release_charge3] (phase=3) & (!passturn_vehiculo3) & (v3_initialization_end_done) & (v3_initialization_init_done) & (current_time >= v3_end_time) & (v3_batery_situation < MAX_BAT) & (v3_charge_status = CHARGING) ->
+        (v3_charge_status' = NOT_AVAILABLE) & (passturn_vehiculo3' = true) & (v3_update_timespan' = true) & (end_time_vehiculo3' = max(end_time, current_time));
+
+    [] (phase=3) & (!passturn_vehiculo3) & (v3_initialization_end_done) & (v3_initialization_init_done) & (v3_batery_situation = MAX_BAT) & (v3_charge_status != CHARGING) ->
+        (passturn_vehiculo3' = true);
+
+    [] (phase=3) & (!passturn_vehiculo3) & (v3_initialization_end_done) & (v3_initialization_init_done) & (current_time >= v3_end_time) & (v3_batery_situation < MAX_BAT) & (v3_charge_status != CHARGING) ->
+         (passturn_vehiculo3' = true);
+
+     [] (passturn_vehiculo3) -> (phase' = (phase = M ? 0 : phase + 1)) & (passturn_vehiculo3' = false) & (end_time' = v3_update_timespan ? max(end_time, end_time_vehiculo3): end_time) & (start_time' = min(start_time, start_time_vehiculo3));
+endmodule
+
+module charger1
+    charger1_status : [FREE..BROKEN] init FREE;
+    repair_time_charger1 : [0..TOTAL_HOURS] init 0;
+    num_fallos1 : [0..5] init 0;
+
+    [] (phase=0) & (current_time<TOTAL_HOURS) & (num_fallos1<5) & (charger1_status = FREE)->
+        0.1 : (charger1_status'= BROKEN) +
+        0.9 : (charger1_status'= charger1_status) & (repair_time_charger1' = current_time + 2);
+
+    [start_charge1] (charger1_status = FREE) -> (charger1_status' = OCCUPIED);
+    [release_charge1] (charger1_status = OCCUPIED) -> (charger1_status' = FREE);
+    [wait_for_charge1] (charger1_status = BROKEN) -> (charger1_status' = FREE);
+
+    [start_charge2] (charger1_status = FREE) -> (charger1_status' = OCCUPIED);
+    [release_charge2] (charger1_status = OCCUPIED) -> (charger1_status' = FREE);
+    [wait_for_charge2] (charger1_status = BROKEN) -> (charger1_status' = FREE);
+
+    [start_charge3] (charger1_status = FREE) -> (charger1_status' = OCCUPIED);
+    [release_charge3] (charger1_status = OCCUPIED) -> (charger1_status' = FREE);
+    [wait_for_charge3] (charger1_status = BROKEN) -> (charger1_status' = FREE);
+
+endmodule
+
+rewards "total_time"
+    [] phase = 0 & v1_charge_status = CHARGING : 1;
+    [] phase = 0 & v2_charge_status = CHARGING : 1;
+    [] phase = 0 & v3_charge_status = CHARGING : 1;
+endrewards
+
+rewards "total_cost"
+    [] phase = 0 & v1_charge_status = CHARGING & (current_time >= 0 & current_time < 60) : 2;
+    [] phase = 0 & v1_charge_status = CHARGING & (current_time >= 60 & current_time < 120) : 4;
+    [] phase = 0 & v1_charge_status = CHARGING & (current_time >= 120) : 6;
+    [] phase = 0 & v2_charge_status = CHARGING & (current_time >= 0 & current_time < 60) : 2;
+    [] phase = 0 & v2_charge_status = CHARGING & (current_time >= 60 & current_time < 120) : 4;
+    [] phase = 0 & v2_charge_status = CHARGING & (current_time >= 120) : 6;
+    [] phase = 0 & v3_charge_status = CHARGING & (current_time >= 0 & current_time < 60) : 2;
+    [] phase = 0 & v3_charge_status = CHARGING & (current_time >= 60 & current_time < 120) : 4;
+    [] phase = 0 & v3_charge_status = CHARGING & (current_time >= 120) : 6;
+endrewards
+
+rewards "charge_timespan"
+    [] (end_time >= start_time & current_time = TOTAL_HOURS & phase = 0) : end_time - start_time;
+endrewards
+
+rewards "total_disruption"
+    [] phase = 0 & v1_charge_status = CHARGING & (current_time >= v1_start_time & current_time < v1_end_time) : 1;
+    [] phase = 0 & v2_charge_status = CHARGING & (current_time >= v2_start_time & current_time < v2_end_time) : 1;
+    [] phase = 0 & v3_charge_status = CHARGING & (current_time >= v3_start_time & current_time < v3_end_time) : 1;
+endrewards
+
+rewards "fully_completed"
+    [release_charge3] (v3_batery_situation = MAX_BAT) & (v3_charge_status = CHARGING) : 1;
+    [release_charge3] (v3_batery_situation = MAX_BAT) & (v3_charge_status = CHARGING) : 1;
+    [release_charge3] (v3_batery_situation = MAX_BAT) & (v3_charge_status = CHARGING) : 1;
+endrewards
