@@ -1,0 +1,38 @@
+{
+    "classes": [
+      {
+        "name": "Patient",
+        "base_class": "Consumer",
+        "attributes": [
+          "id",
+          "distance_room",
+          "available_time_start",
+          "available_time_end",
+          "has-food"
+        ],
+        "methods": ["get_feeding_time", "get_dis_number"]
+      },
+      {
+        "name": "Robot",
+        "base_class": "Resource",
+        "attributes": ["id"]
+      }
+    ],
+
+    "entity": "patient",
+    "resource": "robot",
+    "progress": "robot_path",
+    "num_resources": "num_robots",
+    "num_entities": "num_patients",
+    "speed_param": "robot_speed",
+    "speed_value": 10,
+    "state_available": "NOT_AVAILABLE",
+    "state_active": "FEEDING",
+    "state_done": "FEEDED",
+    "max_param": "DISTANCE",
+    "max_value": 100,
+    "start_action": "start_feed",
+    "release_action": "release_feed",
+    "action": "feed",
+    "output_file": "modelorobots2.prism"
+}
