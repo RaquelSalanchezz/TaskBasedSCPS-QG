@@ -1,0 +1,436 @@
+dtmc
+
+// Constantes del sistema
+const int N = 2;
+const int M = 6;
+const int robot_speed = 10;
+
+const int DISTANCE = 100;
+const int NOT_AVAILABLE = 0;
+const int FEEDING = 1;
+const int FEEDED = 2;
+
+const int FREE = 0;
+const int BROKEN = 2;
+const int OCCUPIED = 1;
+
+// Seguimiento del tiempo
+const int TOTAL_HOURS = 240;
+global current_time : [0..TOTAL_HOURS] init 0;
+global phase : [0..M] init 0;
+global start_time : [0..TOTAL_HOURS] init TOTAL_HOURS;
+global end_time : [0..TOTAL_HOURS] init 0;
+
+module time
+    passturn_time: bool init false;
+
+    [] (phase=0) & (!passturn_time) & (current_time < TOTAL_HOURS) ->
+        (current_time' = current_time + 1) & (passturn_time' = true);
+
+    [] (passturn_time) -> (phase' = 1) & (passturn_time' = false);
+endmodule
+
+module patient1
+    passturn_patient1: bool init false;
+    start_time_patient1 : [0..TOTAL_HOURS] init TOTAL_HOURS;
+    end_time_patient1 : [0..TOTAL_HOURS] init 0;
+
+    p1_update_timespan : bool init false;
+    p1_feed_status : [NOT_AVAILABLE..FEEDED] init NOT_AVAILABLE;
+    p1_robot_situation : [0..100] init 20;  // Estado del robot
+    p1_start_time : [0..TOTAL_HOURS] init 91;
+    p1_end_time : [0..TOTAL_HOURS] init 100;
+
+    p1_initialization_init_done: bool init false;
+
+    p1_initialization_end_done: bool init false;
+
+    [] (!p1_initialization_init_done) ->
+        0.1 : (p1_start_time' = max(0, floor(91 - 2 * 0.5))) & (p1_initialization_init_done' = true) +
+        0.2 : (p1_start_time' = max(0, floor(91 - 0.5))) & (p1_initialization_init_done' = true) +
+        0.4 : (p1_start_time' = 91) & (p1_initialization_init_done' = true) +
+        0.2 : (p1_start_time' = min(TOTAL_HOURS, floor(91 + 0.5))) & (p1_initialization_init_done' = true) +
+        0.1 : (p1_start_time' = min(TOTAL_HOURS, floor(91 + 2 * 0.5))) & (p1_initialization_init_done' = true); 
+
+    [] (!p1_initialization_end_done) ->
+        0.1 : (p1_end_time' = max(0, floor(100 - 2 * 0.5))) & (p1_initialization_end_done' = true) +
+        0.2 : (p1_end_time' = max(0, floor(100 - 0.5))) & (p1_initialization_end_done' = true) +
+        0.4 : (p1_end_time' = 100) & (p1_initialization_end_done' = true) +
+        0.2 : (p1_end_time' = min(TOTAL_HOURS, floor(100 + 0.5))) & (p1_initialization_end_done' = true) +
+        0.1 : (p1_end_time' = min(TOTAL_HOURS, floor(100 + 2 * 0.5))) & (p1_initialization_end_done' = true); 
+
+    [] (phase=1) & (!passturn_patient1) & (p1_initialization_end_done) & (p1_initialization_init_done) & (current_time < p1_start_time | p1_feed_status = FEEDED)->
+        (passturn_patient1' = true);
+
+    [start_feed1] (phase=1) & (!passturn_patient1) & (p1_initialization_end_done) & (p1_initialization_init_done) & (current_time = p1_start_time & p1_feed_status != FEEDING & p1_robot_situation < DISTANCE)->
+        (p1_feed_status' = FEEDING) & (p1_robot_situation' = min(p1_robot_situation + robot_speed, DISTANCE)) & (passturn_patient1' = true) & (start_time_patient1' = min(start_time, current_time));
+
+    [] (phase=1) & (!passturn_patient1) & (p1_initialization_end_done) & (p1_initialization_init_done) & (p1_feed_status = FEEDING) & (p1_robot_situation < DISTANCE) & (current_time > p1_start_time) & (current_time < p1_end_time) ->
+        (p1_robot_situation' = min(p1_robot_situation + robot_speed, 100)) & (passturn_patient1' = true);
+
+    [release_feed1] (phase=1) & (!passturn_patient1) & (p1_initialization_end_done) & (p1_initialization_init_done) & (p1_robot_situation = DISTANCE) & (p1_feed_status = FEEDING) ->
+        (p1_feed_status' = FEEDED) & (passturn_patient1' = true) & (p1_update_timespan' = true);
+
+    [release_feed1] (phase=1) & (!passturn_patient1) & (p1_initialization_end_done) & (p1_initialization_init_done) & (current_time >= p1_end_time) & (p1_robot_situation < DISTANCE) & (p1_feed_status = FEEDING)->
+        (p1_feed_status' = NOT_AVAILABLE) & (passturn_patient1' = true) & (end_time_patient1' = max(end_time, current_time));
+
+    [] (phase=1) & (!passturn_patient1) & (p1_initialization_end_done) & (p1_initialization_init_done) & (p1_robot_situation = DISTANCE) & (p1_feed_status != FEEDING) ->
+        (passturn_patient1' = true);
+
+    [] (phase=1) & (!passturn_patient1) & (p1_initialization_end_done) & (p1_initialization_init_done) & (current_time >= p1_end_time) & (p1_robot_situation < DISTANCE) & (p1_feed_status != FEEDING)->
+         (passturn_patient1' = true);
+
+     [] (passturn_patient1) -> (phase' = (phase = M ? 0 : phase + 1)) & (passturn_patient1' = false) & (end_time' = p1_update_timespan ? max(end_time, end_time_patient1): end_time) & (start_time' = min(start_time, start_time_patient1));
+endmodule
+
+module patient2
+    passturn_patient2: bool init false;
+    start_time_patient2 : [0..TOTAL_HOURS] init TOTAL_HOURS;
+    end_time_patient2 : [0..TOTAL_HOURS] init 0;
+
+    p2_update_timespan : bool init false;
+    p2_feed_status : [NOT_AVAILABLE..FEEDED] init NOT_AVAILABLE;
+    p2_robot_situation : [0..100] init 20;  // Estado del robot
+    p2_start_time : [0..TOTAL_HOURS] init 84;
+    p2_end_time : [0..TOTAL_HOURS] init 90;
+
+    p2_initialization_init_done: bool init false;
+
+    p2_initialization_end_done: bool init false;
+
+    [] (!p2_initialization_init_done) ->
+        0.1 : (p2_start_time' = max(0, floor(84 - 2 * 0.5))) & (p2_initialization_init_done' = true) +
+        0.2 : (p2_start_time' = max(0, floor(84 - 0.5))) & (p2_initialization_init_done' = true) +
+        0.4 : (p2_start_time' = 84) & (p2_initialization_init_done' = true) +
+        0.2 : (p2_start_time' = min(TOTAL_HOURS, floor(84 + 0.5))) & (p2_initialization_init_done' = true) +
+        0.1 : (p2_start_time' = min(TOTAL_HOURS, floor(84 + 2 * 0.5))) & (p2_initialization_init_done' = true); 
+
+    [] (!p2_initialization_end_done) ->
+        0.1 : (p2_end_time' = max(0, floor(90 - 2 * 0.5))) & (p2_initialization_end_done' = true) +
+        0.2 : (p2_end_time' = max(0, floor(90 - 0.5))) & (p2_initialization_end_done' = true) +
+        0.4 : (p2_end_time' = 90) & (p2_initialization_end_done' = true) +
+        0.2 : (p2_end_time' = min(TOTAL_HOURS, floor(90 + 0.5))) & (p2_initialization_end_done' = true) +
+        0.1 : (p2_end_time' = min(TOTAL_HOURS, floor(90 + 2 * 0.5))) & (p2_initialization_end_done' = true); 
+
+    [] (phase=2) & (!passturn_patient2) & (p2_initialization_end_done) & (p2_initialization_init_done) & (current_time < p2_start_time | p2_feed_status = FEEDED)->
+        (passturn_patient2' = true);
+
+    [start_feed2] (phase=2) & (!passturn_patient2) & (p2_initialization_end_done) & (p2_initialization_init_done) & (current_time = p2_start_time & p2_feed_status != FEEDING & p2_robot_situation < DISTANCE)->
+        (p2_feed_status' = FEEDING) & (p2_robot_situation' = min(p2_robot_situation + robot_speed, DISTANCE)) & (passturn_patient2' = true) & (start_time_patient2' = min(start_time, current_time));
+
+    [] (phase=2) & (!passturn_patient2) & (p2_initialization_end_done) & (p2_initialization_init_done) & (p2_feed_status = FEEDING) & (p2_robot_situation < DISTANCE) & (current_time > p2_start_time) & (current_time < p2_end_time) ->
+        (p2_robot_situation' = min(p2_robot_situation + robot_speed, 100)) & (passturn_patient2' = true);
+
+    [release_feed2] (phase=2) & (!passturn_patient2) & (p2_initialization_end_done) & (p2_initialization_init_done) & (p2_robot_situation = DISTANCE) & (p2_feed_status = FEEDING) ->
+        (p2_feed_status' = FEEDED) & (passturn_patient2' = true) & (p2_update_timespan' = true);
+
+    [release_feed2] (phase=2) & (!passturn_patient2) & (p2_initialization_end_done) & (p2_initialization_init_done) & (current_time >= p2_end_time) & (p2_robot_situation < DISTANCE) & (p2_feed_status = FEEDING)->
+        (p2_feed_status' = NOT_AVAILABLE) & (passturn_patient2' = true) & (end_time_patient2' = max(end_time, current_time));
+
+    [] (phase=2) & (!passturn_patient2) & (p2_initialization_end_done) & (p2_initialization_init_done) & (p2_robot_situation = DISTANCE) & (p2_feed_status != FEEDING) ->
+        (passturn_patient2' = true);
+
+    [] (phase=2) & (!passturn_patient2) & (p2_initialization_end_done) & (p2_initialization_init_done) & (current_time >= p2_end_time) & (p2_robot_situation < DISTANCE) & (p2_feed_status != FEEDING)->
+         (passturn_patient2' = true);
+
+     [] (passturn_patient2) -> (phase' = (phase = M ? 0 : phase + 1)) & (passturn_patient2' = false) & (end_time' = p2_update_timespan ? max(end_time, end_time_patient2): end_time) & (start_time' = min(start_time, start_time_patient2));
+endmodule
+
+module patient3
+    passturn_patient3: bool init false;
+    start_time_patient3 : [0..TOTAL_HOURS] init TOTAL_HOURS;
+    end_time_patient3 : [0..TOTAL_HOURS] init 0;
+
+    p3_update_timespan : bool init false;
+    p3_feed_status : [NOT_AVAILABLE..FEEDED] init NOT_AVAILABLE;
+    p3_robot_situation : [0..100] init 20;  // Estado del robot
+    p3_start_time : [0..TOTAL_HOURS] init 120;
+    p3_end_time : [0..TOTAL_HOURS] init 130;
+
+    p3_initialization_init_done: bool init false;
+
+    p3_initialization_end_done: bool init false;
+
+    [] (!p3_initialization_init_done) ->
+        0.1 : (p3_start_time' = max(0, floor(120 - 2 * 0.5))) & (p3_initialization_init_done' = true) +
+        0.2 : (p3_start_time' = max(0, floor(120 - 0.5))) & (p3_initialization_init_done' = true) +
+        0.4 : (p3_start_time' = 120) & (p3_initialization_init_done' = true) +
+        0.2 : (p3_start_time' = min(TOTAL_HOURS, floor(120 + 0.5))) & (p3_initialization_init_done' = true) +
+        0.1 : (p3_start_time' = min(TOTAL_HOURS, floor(120 + 2 * 0.5))) & (p3_initialization_init_done' = true); 
+
+    [] (!p3_initialization_end_done) ->
+        0.1 : (p3_end_time' = max(0, floor(130 - 2 * 0.5))) & (p3_initialization_end_done' = true) +
+        0.2 : (p3_end_time' = max(0, floor(130 - 0.5))) & (p3_initialization_end_done' = true) +
+        0.4 : (p3_end_time' = 130) & (p3_initialization_end_done' = true) +
+        0.2 : (p3_end_time' = min(TOTAL_HOURS, floor(130 + 0.5))) & (p3_initialization_end_done' = true) +
+        0.1 : (p3_end_time' = min(TOTAL_HOURS, floor(130 + 2 * 0.5))) & (p3_initialization_end_done' = true); 
+
+    [] (phase=3) & (!passturn_patient3) & (p3_initialization_end_done) & (p3_initialization_init_done) & (current_time < p3_start_time | p3_feed_status = FEEDED)->
+        (passturn_patient3' = true);
+
+    [start_feed3] (phase=3) & (!passturn_patient3) & (p3_initialization_end_done) & (p3_initialization_init_done) & (current_time = p3_start_time & p3_feed_status != FEEDING & p3_robot_situation < DISTANCE)->
+        (p3_feed_status' = FEEDING) & (p3_robot_situation' = min(p3_robot_situation + robot_speed, DISTANCE)) & (passturn_patient3' = true) & (start_time_patient3' = min(start_time, current_time));
+
+    [] (phase=3) & (!passturn_patient3) & (p3_initialization_end_done) & (p3_initialization_init_done) & (p3_feed_status = FEEDING) & (p3_robot_situation < DISTANCE) & (current_time > p3_start_time) & (current_time < p3_end_time) ->
+        (p3_robot_situation' = min(p3_robot_situation + robot_speed, 100)) & (passturn_patient3' = true);
+
+    [release_feed3] (phase=3) & (!passturn_patient3) & (p3_initialization_end_done) & (p3_initialization_init_done) & (p3_robot_situation = DISTANCE) & (p3_feed_status = FEEDING) ->
+        (p3_feed_status' = FEEDED) & (passturn_patient3' = true) & (p3_update_timespan' = true);
+
+    [release_feed3] (phase=3) & (!passturn_patient3) & (p3_initialization_end_done) & (p3_initialization_init_done) & (current_time >= p3_end_time) & (p3_robot_situation < DISTANCE) & (p3_feed_status = FEEDING)->
+        (p3_feed_status' = NOT_AVAILABLE) & (passturn_patient3' = true) & (end_time_patient3' = max(end_time, current_time));
+
+    [] (phase=3) & (!passturn_patient3) & (p3_initialization_end_done) & (p3_initialization_init_done) & (p3_robot_situation = DISTANCE) & (p3_feed_status != FEEDING) ->
+        (passturn_patient3' = true);
+
+    [] (phase=3) & (!passturn_patient3) & (p3_initialization_end_done) & (p3_initialization_init_done) & (current_time >= p3_end_time) & (p3_robot_situation < DISTANCE) & (p3_feed_status != FEEDING)->
+         (passturn_patient3' = true);
+
+     [] (passturn_patient3) -> (phase' = (phase = M ? 0 : phase + 1)) & (passturn_patient3' = false) & (end_time' = p3_update_timespan ? max(end_time, end_time_patient3): end_time) & (start_time' = min(start_time, start_time_patient3));
+endmodule
+
+module patient4
+    passturn_patient4: bool init false;
+    start_time_patient4 : [0..TOTAL_HOURS] init TOTAL_HOURS;
+    end_time_patient4 : [0..TOTAL_HOURS] init 0;
+
+    p4_update_timespan : bool init false;
+    p4_feed_status : [NOT_AVAILABLE..FEEDED] init NOT_AVAILABLE;
+    p4_robot_situation : [0..100] init 20;  // Estado del robot
+    p4_start_time : [0..TOTAL_HOURS] init 122;
+    p4_end_time : [0..TOTAL_HOURS] init 130;
+
+    p4_initialization_init_done: bool init false;
+
+    p4_initialization_end_done: bool init false;
+
+    [] (!p4_initialization_init_done) ->
+        0.1 : (p4_start_time' = max(0, floor(122 - 2 * 0.5))) & (p4_initialization_init_done' = true) +
+        0.2 : (p4_start_time' = max(0, floor(122 - 0.5))) & (p4_initialization_init_done' = true) +
+        0.4 : (p4_start_time' = 122) & (p4_initialization_init_done' = true) +
+        0.2 : (p4_start_time' = min(TOTAL_HOURS, floor(122 + 0.5))) & (p4_initialization_init_done' = true) +
+        0.1 : (p4_start_time' = min(TOTAL_HOURS, floor(122 + 2 * 0.5))) & (p4_initialization_init_done' = true); 
+
+    [] (!p4_initialization_end_done) ->
+        0.1 : (p4_end_time' = max(0, floor(130 - 2 * 0.5))) & (p4_initialization_end_done' = true) +
+        0.2 : (p4_end_time' = max(0, floor(130 - 0.5))) & (p4_initialization_end_done' = true) +
+        0.4 : (p4_end_time' = 130) & (p4_initialization_end_done' = true) +
+        0.2 : (p4_end_time' = min(TOTAL_HOURS, floor(130 + 0.5))) & (p4_initialization_end_done' = true) +
+        0.1 : (p4_end_time' = min(TOTAL_HOURS, floor(130 + 2 * 0.5))) & (p4_initialization_end_done' = true); 
+
+    [] (phase=4) & (!passturn_patient4) & (p4_initialization_end_done) & (p4_initialization_init_done) & (current_time < p4_start_time | p4_feed_status = FEEDED)->
+        (passturn_patient4' = true);
+
+    [start_feed4] (phase=4) & (!passturn_patient4) & (p4_initialization_end_done) & (p4_initialization_init_done) & (current_time = p4_start_time & p4_feed_status != FEEDING & p4_robot_situation < DISTANCE)->
+        (p4_feed_status' = FEEDING) & (p4_robot_situation' = min(p4_robot_situation + robot_speed, DISTANCE)) & (passturn_patient4' = true) & (start_time_patient4' = min(start_time, current_time));
+
+    [] (phase=4) & (!passturn_patient4) & (p4_initialization_end_done) & (p4_initialization_init_done) & (p4_feed_status = FEEDING) & (p4_robot_situation < DISTANCE) & (current_time > p4_start_time) & (current_time < p4_end_time) ->
+        (p4_robot_situation' = min(p4_robot_situation + robot_speed, 100)) & (passturn_patient4' = true);
+
+    [release_feed4] (phase=4) & (!passturn_patient4) & (p4_initialization_end_done) & (p4_initialization_init_done) & (p4_robot_situation = DISTANCE) & (p4_feed_status = FEEDING) ->
+        (p4_feed_status' = FEEDED) & (passturn_patient4' = true) & (p4_update_timespan' = true);
+
+    [release_feed4] (phase=4) & (!passturn_patient4) & (p4_initialization_end_done) & (p4_initialization_init_done) & (current_time >= p4_end_time) & (p4_robot_situation < DISTANCE) & (p4_feed_status = FEEDING)->
+        (p4_feed_status' = NOT_AVAILABLE) & (passturn_patient4' = true) & (end_time_patient4' = max(end_time, current_time));
+
+    [] (phase=4) & (!passturn_patient4) & (p4_initialization_end_done) & (p4_initialization_init_done) & (p4_robot_situation = DISTANCE) & (p4_feed_status != FEEDING) ->
+        (passturn_patient4' = true);
+
+    [] (phase=4) & (!passturn_patient4) & (p4_initialization_end_done) & (p4_initialization_init_done) & (current_time >= p4_end_time) & (p4_robot_situation < DISTANCE) & (p4_feed_status != FEEDING)->
+         (passturn_patient4' = true);
+
+     [] (passturn_patient4) -> (phase' = (phase = M ? 0 : phase + 1)) & (passturn_patient4' = false) & (end_time' = p4_update_timespan ? max(end_time, end_time_patient4): end_time) & (start_time' = min(start_time, start_time_patient4));
+endmodule
+
+module patient5
+    passturn_patient5: bool init false;
+    start_time_patient5 : [0..TOTAL_HOURS] init TOTAL_HOURS;
+    end_time_patient5 : [0..TOTAL_HOURS] init 0;
+
+    p5_update_timespan : bool init false;
+    p5_feed_status : [NOT_AVAILABLE..FEEDED] init NOT_AVAILABLE;
+    p5_robot_situation : [0..100] init 20;  // Estado del robot
+    p5_start_time : [0..TOTAL_HOURS] init 149;
+    p5_end_time : [0..TOTAL_HOURS] init 170;
+
+    p5_initialization_init_done: bool init false;
+
+    p5_initialization_end_done: bool init false;
+
+    [] (!p5_initialization_init_done) ->
+        0.1 : (p5_start_time' = max(0, floor(149 - 2 * 0.5))) & (p5_initialization_init_done' = true) +
+        0.2 : (p5_start_time' = max(0, floor(149 - 0.5))) & (p5_initialization_init_done' = true) +
+        0.4 : (p5_start_time' = 149) & (p5_initialization_init_done' = true) +
+        0.2 : (p5_start_time' = min(TOTAL_HOURS, floor(149 + 0.5))) & (p5_initialization_init_done' = true) +
+        0.1 : (p5_start_time' = min(TOTAL_HOURS, floor(149 + 2 * 0.5))) & (p5_initialization_init_done' = true); 
+
+    [] (!p5_initialization_end_done) ->
+        0.1 : (p5_end_time' = max(0, floor(170 - 2 * 0.5))) & (p5_initialization_end_done' = true) +
+        0.2 : (p5_end_time' = max(0, floor(170 - 0.5))) & (p5_initialization_end_done' = true) +
+        0.4 : (p5_end_time' = 170) & (p5_initialization_end_done' = true) +
+        0.2 : (p5_end_time' = min(TOTAL_HOURS, floor(170 + 0.5))) & (p5_initialization_end_done' = true) +
+        0.1 : (p5_end_time' = min(TOTAL_HOURS, floor(170 + 2 * 0.5))) & (p5_initialization_end_done' = true); 
+
+    [] (phase=5) & (!passturn_patient5) & (p5_initialization_end_done) & (p5_initialization_init_done) & (current_time < p5_start_time | p5_feed_status = FEEDED)->
+        (passturn_patient5' = true);
+
+    [start_feed5] (phase=5) & (!passturn_patient5) & (p5_initialization_end_done) & (p5_initialization_init_done) & (current_time = p5_start_time & p5_feed_status != FEEDING & p5_robot_situation < DISTANCE)->
+        (p5_feed_status' = FEEDING) & (p5_robot_situation' = min(p5_robot_situation + robot_speed, DISTANCE)) & (passturn_patient5' = true) & (start_time_patient5' = min(start_time, current_time));
+
+    [] (phase=5) & (!passturn_patient5) & (p5_initialization_end_done) & (p5_initialization_init_done) & (p5_feed_status = FEEDING) & (p5_robot_situation < DISTANCE) & (current_time > p5_start_time) & (current_time < p5_end_time) ->
+        (p5_robot_situation' = min(p5_robot_situation + robot_speed, 100)) & (passturn_patient5' = true);
+
+    [release_feed5] (phase=5) & (!passturn_patient5) & (p5_initialization_end_done) & (p5_initialization_init_done) & (p5_robot_situation = DISTANCE) & (p5_feed_status = FEEDING) ->
+        (p5_feed_status' = FEEDED) & (passturn_patient5' = true) & (p5_update_timespan' = true);
+
+    [release_feed5] (phase=5) & (!passturn_patient5) & (p5_initialization_end_done) & (p5_initialization_init_done) & (current_time >= p5_end_time) & (p5_robot_situation < DISTANCE) & (p5_feed_status = FEEDING)->
+        (p5_feed_status' = NOT_AVAILABLE) & (passturn_patient5' = true) & (end_time_patient5' = max(end_time, current_time));
+
+    [] (phase=5) & (!passturn_patient5) & (p5_initialization_end_done) & (p5_initialization_init_done) & (p5_robot_situation = DISTANCE) & (p5_feed_status != FEEDING) ->
+        (passturn_patient5' = true);
+
+    [] (phase=5) & (!passturn_patient5) & (p5_initialization_end_done) & (p5_initialization_init_done) & (current_time >= p5_end_time) & (p5_robot_situation < DISTANCE) & (p5_feed_status != FEEDING)->
+         (passturn_patient5' = true);
+
+     [] (passturn_patient5) -> (phase' = (phase = M ? 0 : phase + 1)) & (passturn_patient5' = false) & (end_time' = p5_update_timespan ? max(end_time, end_time_patient5): end_time) & (start_time' = min(start_time, start_time_patient5));
+endmodule
+
+module patient6
+    passturn_patient6: bool init false;
+    start_time_patient6 : [0..TOTAL_HOURS] init TOTAL_HOURS;
+    end_time_patient6 : [0..TOTAL_HOURS] init 0;
+
+    p6_update_timespan : bool init false;
+    p6_feed_status : [NOT_AVAILABLE..FEEDED] init NOT_AVAILABLE;
+    p6_robot_situation : [0..100] init 20;  // Estado del robot
+    p6_start_time : [0..TOTAL_HOURS] init 165;
+    p6_end_time : [0..TOTAL_HOURS] init 180;
+
+    p6_initialization_init_done: bool init false;
+
+    p6_initialization_end_done: bool init false;
+
+    [] (!p6_initialization_init_done) ->
+        0.1 : (p6_start_time' = max(0, floor(165 - 2 * 0.5))) & (p6_initialization_init_done' = true) +
+        0.2 : (p6_start_time' = max(0, floor(165 - 0.5))) & (p6_initialization_init_done' = true) +
+        0.4 : (p6_start_time' = 165) & (p6_initialization_init_done' = true) +
+        0.2 : (p6_start_time' = min(TOTAL_HOURS, floor(165 + 0.5))) & (p6_initialization_init_done' = true) +
+        0.1 : (p6_start_time' = min(TOTAL_HOURS, floor(165 + 2 * 0.5))) & (p6_initialization_init_done' = true); 
+
+    [] (!p6_initialization_end_done) ->
+        0.1 : (p6_end_time' = max(0, floor(180 - 2 * 0.5))) & (p6_initialization_end_done' = true) +
+        0.2 : (p6_end_time' = max(0, floor(180 - 0.5))) & (p6_initialization_end_done' = true) +
+        0.4 : (p6_end_time' = 180) & (p6_initialization_end_done' = true) +
+        0.2 : (p6_end_time' = min(TOTAL_HOURS, floor(180 + 0.5))) & (p6_initialization_end_done' = true) +
+        0.1 : (p6_end_time' = min(TOTAL_HOURS, floor(180 + 2 * 0.5))) & (p6_initialization_end_done' = true); 
+
+    [] (phase=6) & (!passturn_patient6) & (p6_initialization_end_done) & (p6_initialization_init_done) & (current_time < p6_start_time | p6_feed_status = FEEDED)->
+        (passturn_patient6' = true);
+
+    [start_feed6] (phase=6) & (!passturn_patient6) & (p6_initialization_end_done) & (p6_initialization_init_done) & (current_time = p6_start_time & p6_feed_status != FEEDING & p6_robot_situation < DISTANCE)->
+        (p6_feed_status' = FEEDING) & (p6_robot_situation' = min(p6_robot_situation + robot_speed, DISTANCE)) & (passturn_patient6' = true) & (start_time_patient6' = min(start_time, current_time));
+
+    [] (phase=6) & (!passturn_patient6) & (p6_initialization_end_done) & (p6_initialization_init_done) & (p6_feed_status = FEEDING) & (p6_robot_situation < DISTANCE) & (current_time > p6_start_time) & (current_time < p6_end_time) ->
+        (p6_robot_situation' = min(p6_robot_situation + robot_speed, 100)) & (passturn_patient6' = true);
+
+    [release_feed6] (phase=6) & (!passturn_patient6) & (p6_initialization_end_done) & (p6_initialization_init_done) & (p6_robot_situation = DISTANCE) & (p6_feed_status = FEEDING) ->
+        (p6_feed_status' = FEEDED) & (passturn_patient6' = true) & (p6_update_timespan' = true);
+
+    [release_feed6] (phase=6) & (!passturn_patient6) & (p6_initialization_end_done) & (p6_initialization_init_done) & (current_time >= p6_end_time) & (p6_robot_situation < DISTANCE) & (p6_feed_status = FEEDING)->
+        (p6_feed_status' = NOT_AVAILABLE) & (passturn_patient6' = true) & (end_time_patient6' = max(end_time, current_time));
+
+    [] (phase=6) & (!passturn_patient6) & (p6_initialization_end_done) & (p6_initialization_init_done) & (p6_robot_situation = DISTANCE) & (p6_feed_status != FEEDING) ->
+        (passturn_patient6' = true);
+
+    [] (phase=6) & (!passturn_patient6) & (p6_initialization_end_done) & (p6_initialization_init_done) & (current_time >= p6_end_time) & (p6_robot_situation < DISTANCE) & (p6_feed_status != FEEDING)->
+         (passturn_patient6' = true);
+
+     [] (passturn_patient6) -> (phase' = (phase = M ? 0 : phase + 1)) & (passturn_patient6' = false) & (end_time' = p6_update_timespan ? max(end_time, end_time_patient6): end_time) & (start_time' = min(start_time, start_time_patient6));
+endmodule
+
+module robot1
+    robot1_status : [FREE..BROKEN] init FREE;
+
+    repair_time_robot1 : [0..TOTAL_HOURS] init 0;
+    num_fallos1 : [0..5] init 0;
+
+    [] (phase=0) & (current_time<240) & (num_fallos1<5) & (robot1_status = FREE)->
+        0.1 : (robot1_status'= BROKEN) +
+        0.9 : (robot1_status'= robot1_status) & (repair_time_robot1' = current_time + 2);
+
+    [start_feed1] (robot1_status = FREE) -> (robot1_status' = OCCUPIED);
+    [release_feed1] (robot1_status = OCCUPIED) -> (robot1_status' = FREE);
+
+    [wait_for_feed1] (robot1_status = BROKEN) -> (robot1_status' = FREE);
+
+    [start_feed2] (robot1_status = FREE) -> (robot1_status' = OCCUPIED);
+    [release_feed2] (robot1_status = OCCUPIED) -> (robot1_status' = FREE);
+
+    [wait_for_feed2] (robot1_status = BROKEN) -> (robot1_status' = FREE);
+
+    [start_feed3] (robot1_status = FREE) -> (robot1_status' = OCCUPIED);
+    [release_feed3] (robot1_status = OCCUPIED) -> (robot1_status' = FREE);
+
+    [wait_for_feed3] (robot1_status = BROKEN) -> (robot1_status' = FREE);
+
+    [start_feed5] (robot1_status = FREE) -> (robot1_status' = OCCUPIED);
+    [release_feed5] (robot1_status = OCCUPIED) -> (robot1_status' = FREE);
+
+    [wait_for_feed5] (robot1_status = BROKEN) -> (robot1_status' = FREE);
+
+    [start_feed6] (robot1_status = FREE) -> (robot1_status' = OCCUPIED);
+    [release_feed6] (robot1_status = OCCUPIED) -> (robot1_status' = FREE);
+
+    [wait_for_feed6] (robot1_status = BROKEN) -> (robot1_status' = FREE);
+
+endmodule
+
+module robot2
+    robot2_status : [FREE..BROKEN] init FREE;
+
+    repair_time_robot2 : [0..TOTAL_HOURS] init 0;
+    num_fallos2 : [0..5] init 0;
+
+    [] (phase=0) & (current_time<240) & (num_fallos2<5) & (robot2_status = FREE)->
+        0.1 : (robot2_status'= BROKEN) +
+        0.9 : (robot2_status'= robot2_status) & (repair_time_robot2' = current_time + 2);
+
+    [start_feed4] (robot2_status = FREE) -> (robot2_status' = OCCUPIED);
+    [release_feed4] (robot2_status = OCCUPIED) -> (robot2_status' = FREE);
+
+    [wait_for_feed4] (robot2_status = BROKEN) -> (robot2_status' = FREE);
+
+endmodule
+
+rewards "total_time"
+    [] phase = 0 & p1_feed_status = FEEDING : 1;
+    [] phase = 0 & p2_feed_status = FEEDING : 1;
+    [] phase = 0 & p3_feed_status = FEEDING : 1;
+    [] phase = 0 & p4_feed_status = FEEDING : 1;
+    [] phase = 0 & p5_feed_status = FEEDING : 1;
+    [] phase = 0 & p6_feed_status = FEEDING : 1;
+endrewards
+
+rewards "total_cost"
+    [] phase = 0 & p1_feed_status = FEEDING & (current_time >= 0 & current_time < 60) : 2;
+    [] phase = 0 & p1_feed_status = FEEDING & (current_time >= 60 & current_time < 120) : 4;
+    [] phase = 0 & p1_feed_status = FEEDING & (current_time >= 120) : 6;
+    [] phase = 0 & p2_feed_status = FEEDING & (current_time >= 0 & current_time < 60) : 2;
+    [] phase = 0 & p2_feed_status = FEEDING & (current_time >= 60 & current_time < 120) : 4;
+    [] phase = 0 & p2_feed_status = FEEDING & (current_time >= 120) : 6;
+    [] phase = 0 & p3_feed_status = FEEDING & (current_time >= 0 & current_time < 60) : 2;
+    [] phase = 0 & p3_feed_status = FEEDING & (current_time >= 60 & current_time < 120) : 4;
+    [] phase = 0 & p3_feed_status = FEEDING & (current_time >= 120) : 6;
+    [] phase = 0 & p4_feed_status = FEEDING & (current_time >= 0 & current_time < 60) : 2;
+    [] phase = 0 & p4_feed_status = FEEDING & (current_time >= 60 & current_time < 120) : 4;
+    [] phase = 0 & p4_feed_status = FEEDING & (current_time >= 120) : 6;
+    [] phase = 0 & p5_feed_status = FEEDING & (current_time >= 0 & current_time < 60) : 2;
+    [] phase = 0 & p5_feed_status = FEEDING & (current_time >= 60 & current_time < 120) : 4;
+    [] phase = 0 & p5_feed_status = FEEDING & (current_time >= 120) : 6;
+    [] phase = 0 & p6_feed_status = FEEDING & (current_time >= 0 & current_time < 60) : 2;
+    [] phase = 0 & p6_feed_status = FEEDING & (current_time >= 60 & current_time < 120) : 4;
+    [] phase = 0 & p6_feed_status = FEEDING & (current_time >= 120) : 6;
+endrewards
+rewards "charging_timespan"
+    [] (end_time >= start_time & current_time = TOTAL_HOURS & phase = 0) : end_time - start_time;
+endrewards
