@@ -1,0 +1,43 @@
+{ 
+    "classes": [
+      {
+        "name": "ElectricVehicle",
+        "base_class": "Consumer",
+        "attributes": [
+          "id",
+          "distance",
+          "available_time_start",
+          "available_time_end",
+          "current_charge",
+          "battery_capacity",
+          "charge_speed",
+          "discharge_rate"
+        ],
+        "methods": ["get_charging_time", "get_charging_cost"]
+      },
+      {
+        "name": "Cargador",
+        "base_class": "Resource",
+        "attributes": ["id"]
+      }
+    ],
+    "entity": "vehiculo",
+    "resource": "charger",
+    "progress": "batery",
+    "num_resources": "num_chargers",
+    "num_entities": "num_vehicles",
+    "speed_param": "charge_rate",
+    "speed_value": 10,
+    "state_available": "NOT_AVAILABLE",
+    "state_active": "CHARGING",
+    "state_done": "CHARGED",
+    "max_param": "MAX_BAT",
+    "max_value": 100,
+    "start_action": "start_charge",
+    "release_action": "release_charge",
+    "action": "charge",
+    "output_file": "modelo1.prism",
+    "reward_acum": "true",
+    "reward_timespan": "true",
+    "reward_acum_const": "false"
+}
