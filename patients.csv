@@ -1,0 +1,7 @@
+PatientID,RoomDistance,CompanionStartHour,CompanionEndHour,HasMeal
+1, 100, 9, 10, 0
+2, 200, 8, 9, 0
+3, 150, 12, 13, 0
+4, 200, 12, 13, 0
+5, 100, 14, 17, 0
+6, 200, 13, 18, 0
