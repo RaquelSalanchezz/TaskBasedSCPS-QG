@@ -115,9 +115,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-
-#TODO: Recordar que en el caso de la agricultura, los cultivos van a taner id, tini, tfin, distancia al robot, nivel de humedad (gramos agua por metro cúbico)
-#De momento, para esta primera version se establece, al igual que para el caso de los pacientes, que el tiempo se mida
-#segun lo que tarden los robots en llegar a las parcelas y se establezca un tiempo comun para lo que tardan en regarse estas
-#O un tiempo que dependa de la humedad del suelo y de lo que necesiten (considerar tiempo que tardan en llegar igual para todos los cultivos)
