@@ -1,0 +1,40 @@
+{
+    "classes": [
+      {
+        "name": "Crop",
+        "base_class": "Consumer",
+        "attributes": [
+          "id",
+          "distance",
+          "available_time_start",
+          "available_time_end",
+          "current_hum"
+        ],
+        "methods": ["get_charging_time", "get_charging_cost"]
+      },
+      {
+        "name": "Robot",
+        "base_class": "Resource",
+        "attributes": ["id"]
+      }
+    ],
+    
+    "entity": "crop",
+    "resource": "robot",
+    "progress": "robot_path",
+    "num_resources": "num_robots",
+    "num_entities": "num_crops",
+    "speed_param": "robot_speed",
+    "speed_value": 10,
+    "state_available": "NOT_AVAILABLE",
+    "state_active": "IRRIGATING",
+    "state_done": "IRRIGATED",
+    "max_param": "DISTANCE",
+    "max_value": 100,
+    "start_action": "start_irrigate",
+    "release_action": "release_irrigate",
+    "action": "irrigate",
+    "output_file": "modelorobots3.prism",
+    "reward_acum": "true",
+    "reward_timespan": "true"
+  }
