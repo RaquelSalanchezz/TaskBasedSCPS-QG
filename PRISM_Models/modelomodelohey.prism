@@ -1,0 +1,248 @@
+dtmc
+
+// Constantes del sistema
+const int N = 1;
+const int M = 3;
+const int robot_speed = 10;
+
+const int DISTANCE = 100;
+
+const int NOT_AVAILABLE = 0;
+const int IRRIGATING = 1;
+const int IRRIGATED = 2;
+
+const int FREE = 0;
+const int OCCUPIED = 1;
+const int BROKEN = 2;
+
+// Seguimiento del tiempo
+const int TOTAL_HOURS = 240;
+global current_time : [0..TOTAL_HOURS] init 0;
+global phase : [0..M] init 0;
+global start_time : [0..TOTAL_HOURS] init TOTAL_HOURS;
+global end_time : [0..TOTAL_HOURS] init 0;
+
+module time
+    passturn_time: bool init false;
+
+    [] (phase=0) & (!passturn_time) & (current_time < TOTAL_HOURS) ->
+        (current_time' = current_time + 1) & (passturn_time' = true);
+
+    [] (passturn_time) -> (phase' = 1) & (passturn_time' = false);
+endmodule
+
+module crop1
+    passturn_crop1: bool init false;
+    start_time_crop1 : [0..TOTAL_HOURS] init TOTAL_HOURS;
+    end_time_crop1 : [0..TOTAL_HOURS] init 0;
+
+    c1_update_timespan : bool init false;
+    c1_irrigate_status : [NOT_AVAILABLE..IRRIGATED] init NOT_AVAILABLE;
+    c1_robot_path_situation : [0..100] init 20;
+    c1_start_time : [0..TOTAL_HOURS] init 11;
+    c1_end_time : [0..TOTAL_HOURS] init 17;
+
+    c1_initialization_init_done: bool init false;
+
+    c1_initialization_end_done: bool init false;
+
+    [] (!c1_initialization_init_done) ->
+        0.1 : (c1_start_time' = max(0, floor(11 - 2 * 0.5))) & (c1_initialization_init_done' = true) +
+        0.2 : (c1_start_time' = max(0, floor(11 - 0.5))) & (c1_initialization_init_done' = true) +
+        0.4 : (c1_start_time' = 11) & (c1_initialization_init_done' = true) +
+        0.2 : (c1_start_time' = min(TOTAL_HOURS, floor(11 + 0.5))) & (c1_initialization_init_done' = true) +
+        0.1 : (c1_start_time' = min(TOTAL_HOURS, floor(11 + 2 * 0.5))) & (c1_initialization_init_done' = true); 
+
+    [] (!c1_initialization_end_done) ->
+        0.1 : (c1_end_time' = max(0, floor(17 - 2 * 0.5))) & (c1_initialization_end_done' = true) +
+        0.2 : (c1_end_time' = max(0, floor(17 - 0.5))) & (c1_initialization_end_done' = true) +
+        0.4 : (c1_end_time' = 17) & (c1_initialization_end_done' = true) +
+        0.2 : (c1_end_time' = min(TOTAL_HOURS, floor(17 + 0.5))) & (c1_initialization_end_done' = true) +
+        0.1 : (c1_end_time' = min(TOTAL_HOURS, floor(17 + 2 * 0.5))) & (c1_initialization_end_done' = true); 
+
+    [] (phase=1) & (!passturn_crop1) & (c1_initialization_end_done) & (c1_initialization_init_done) & (current_time < c1_start_time | c1_irrigate_status = IRRIGATED)->
+        (passturn_crop1' = true);
+
+    [start_irrigate1] (phase=1) & (!passturn_crop1) & (c1_initialization_end_done) & (c1_initialization_init_done) & (current_time = c1_start_time & c1_irrigate_status != IRRIGATING & c1_robot_path_situation < DISTANCE)->
+        (c1_irrigate_status' = IRRIGATING) & (c1_robot_path_situation' = min(c1_robot_path_situation + robot_speed, DISTANCE)) & (passturn_crop1' = true) & (start_time_crop1' = min(start_time, current_time));
+
+    [] (phase=1) & (!passturn_crop1) & (c1_initialization_end_done) & (c1_initialization_init_done) & (c1_irrigate_status = IRRIGATING) & (c1_robot_path_situation < DISTANCE) & (current_time > c1_start_time) & (current_time < c1_end_time) ->
+        (c1_robot_path_situation' = min(c1_robot_path_situation + robot_speed, DISTANCE)) & (passturn_crop1' = true);
+
+    [wait_for_irrigate1] (phase=1) & (!passturn_crop1) & (c1_initialization_end_done) & (c1_initialization_init_done) & (current_time = c1_start_time & c1_irrigate_status != IRRIGATING & c1_robot_path_situation < DISTANCE) ->    (c1_start_time' = min(c1_start_time + 2, c1_end_time-1));
+
+    [release_irrigate1] (phase=1) & (!passturn_crop1) & (c1_initialization_end_done) & (c1_initialization_init_done) & (c1_robot_path_situation = DISTANCE) & (c1_irrigate_status = IRRIGATING) ->
+        (c1_irrigate_status' = IRRIGATED) & (passturn_crop1' = true) & (end_time_crop1' = max(end_time, current_time)) & (c1_update_timespan' = true);
+
+    [release_irrigate1] (phase=1) & (!passturn_crop1) & (c1_initialization_end_done) & (c1_initialization_init_done) & (current_time >= c1_end_time) & (c1_robot_path_situation < DISTANCE) & (c1_irrigate_status = IRRIGATING) ->
+        (c1_irrigate_status' = NOT_AVAILABLE) & (passturn_crop1' = true) & (c1_update_timespan' = true) & (end_time_crop1' = max(end_time, current_time));
+
+    [] (phase=1) & (!passturn_crop1) & (c1_initialization_end_done) & (c1_initialization_init_done) & (c1_robot_path_situation = DISTANCE) & (c1_irrigate_status != IRRIGATING) ->
+        (passturn_crop1' = true);
+
+    [] (phase=1) & (!passturn_crop1) & (c1_initialization_end_done) & (c1_initialization_init_done) & (current_time >= c1_end_time) & (c1_robot_path_situation < DISTANCE) & (c1_irrigate_status != IRRIGATING) ->
+         (passturn_crop1' = true);
+
+     [] (passturn_crop1) -> (phase' = (phase = M ? 0 : phase + 1)) & (passturn_crop1' = false) & (end_time' = c1_update_timespan ? max(end_time, end_time_crop1): end_time) & (start_time' = min(start_time, start_time_crop1));
+endmodule
+
+module crop2
+    passturn_crop2: bool init false;
+    start_time_crop2 : [0..TOTAL_HOURS] init TOTAL_HOURS;
+    end_time_crop2 : [0..TOTAL_HOURS] init 0;
+
+    c2_update_timespan : bool init false;
+    c2_irrigate_status : [NOT_AVAILABLE..IRRIGATED] init NOT_AVAILABLE;
+    c2_robot_path_situation : [0..100] init 20;
+    c2_start_time : [0..TOTAL_HOURS] init 32;
+    c2_end_time : [0..TOTAL_HOURS] init 39;
+
+    c2_initialization_init_done: bool init false;
+
+    c2_initialization_end_done: bool init false;
+
+    [] (!c2_initialization_init_done) ->
+        0.1 : (c2_start_time' = max(0, floor(32 - 2 * 0.5))) & (c2_initialization_init_done' = true) +
+        0.2 : (c2_start_time' = max(0, floor(32 - 0.5))) & (c2_initialization_init_done' = true) +
+        0.4 : (c2_start_time' = 32) & (c2_initialization_init_done' = true) +
+        0.2 : (c2_start_time' = min(TOTAL_HOURS, floor(32 + 0.5))) & (c2_initialization_init_done' = true) +
+        0.1 : (c2_start_time' = min(TOTAL_HOURS, floor(32 + 2 * 0.5))) & (c2_initialization_init_done' = true); 
+
+    [] (!c2_initialization_end_done) ->
+        0.1 : (c2_end_time' = max(0, floor(39 - 2 * 0.5))) & (c2_initialization_end_done' = true) +
+        0.2 : (c2_end_time' = max(0, floor(39 - 0.5))) & (c2_initialization_end_done' = true) +
+        0.4 : (c2_end_time' = 39) & (c2_initialization_end_done' = true) +
+        0.2 : (c2_end_time' = min(TOTAL_HOURS, floor(39 + 0.5))) & (c2_initialization_end_done' = true) +
+        0.1 : (c2_end_time' = min(TOTAL_HOURS, floor(39 + 2 * 0.5))) & (c2_initialization_end_done' = true); 
+
+    [] (phase=2) & (!passturn_crop2) & (c2_initialization_end_done) & (c2_initialization_init_done) & (current_time < c2_start_time | c2_irrigate_status = IRRIGATED)->
+        (passturn_crop2' = true);
+
+    [start_irrigate2] (phase=2) & (!passturn_crop2) & (c2_initialization_end_done) & (c2_initialization_init_done) & (current_time = c2_start_time & c2_irrigate_status != IRRIGATING & c2_robot_path_situation < DISTANCE)->
+        (c2_irrigate_status' = IRRIGATING) & (c2_robot_path_situation' = min(c2_robot_path_situation + robot_speed, DISTANCE)) & (passturn_crop2' = true) & (start_time_crop2' = min(start_time, current_time));
+
+    [] (phase=2) & (!passturn_crop2) & (c2_initialization_end_done) & (c2_initialization_init_done) & (c2_irrigate_status = IRRIGATING) & (c2_robot_path_situation < DISTANCE) & (current_time > c2_start_time) & (current_time < c2_end_time) ->
+        (c2_robot_path_situation' = min(c2_robot_path_situation + robot_speed, DISTANCE)) & (passturn_crop2' = true);
+
+    [wait_for_irrigate2] (phase=2) & (!passturn_crop2) & (c2_initialization_end_done) & (c2_initialization_init_done) & (current_time = c2_start_time & c2_irrigate_status != IRRIGATING & c2_robot_path_situation < DISTANCE) ->    (c2_start_time' = min(c2_start_time + 2, c2_end_time-1));
+
+    [release_irrigate2] (phase=2) & (!passturn_crop2) & (c2_initialization_end_done) & (c2_initialization_init_done) & (c2_robot_path_situation = DISTANCE) & (c2_irrigate_status = IRRIGATING) ->
+        (c2_irrigate_status' = IRRIGATED) & (passturn_crop2' = true) & (end_time_crop2' = max(end_time, current_time)) & (c2_update_timespan' = true);
+
+    [release_irrigate2] (phase=2) & (!passturn_crop2) & (c2_initialization_end_done) & (c2_initialization_init_done) & (current_time >= c2_end_time) & (c2_robot_path_situation < DISTANCE) & (c2_irrigate_status = IRRIGATING) ->
+        (c2_irrigate_status' = NOT_AVAILABLE) & (passturn_crop2' = true) & (c2_update_timespan' = true) & (end_time_crop2' = max(end_time, current_time));
+
+    [] (phase=2) & (!passturn_crop2) & (c2_initialization_end_done) & (c2_initialization_init_done) & (c2_robot_path_situation = DISTANCE) & (c2_irrigate_status != IRRIGATING) ->
+        (passturn_crop2' = true);
+
+    [] (phase=2) & (!passturn_crop2) & (c2_initialization_end_done) & (c2_initialization_init_done) & (current_time >= c2_end_time) & (c2_robot_path_situation < DISTANCE) & (c2_irrigate_status != IRRIGATING) ->
+         (passturn_crop2' = true);
+
+     [] (passturn_crop2) -> (phase' = (phase = M ? 0 : phase + 1)) & (passturn_crop2' = false) & (end_time' = c2_update_timespan ? max(end_time, end_time_crop2): end_time) & (start_time' = min(start_time, start_time_crop2));
+endmodule
+
+module crop3
+    passturn_crop3: bool init false;
+    start_time_crop3 : [0..TOTAL_HOURS] init TOTAL_HOURS;
+    end_time_crop3 : [0..TOTAL_HOURS] init 0;
+
+    c3_update_timespan : bool init false;
+    c3_irrigate_status : [NOT_AVAILABLE..IRRIGATED] init NOT_AVAILABLE;
+    c3_robot_path_situation : [0..100] init 20;
+    c3_start_time : [0..TOTAL_HOURS] init 50;
+    c3_end_time : [0..TOTAL_HOURS] init 156;
+
+    c3_initialization_init_done: bool init false;
+
+    c3_initialization_end_done: bool init false;
+
+    [] (!c3_initialization_init_done) ->
+        0.1 : (c3_start_time' = max(0, floor(50 - 2 * 0.5))) & (c3_initialization_init_done' = true) +
+        0.2 : (c3_start_time' = max(0, floor(50 - 0.5))) & (c3_initialization_init_done' = true) +
+        0.4 : (c3_start_time' = 50) & (c3_initialization_init_done' = true) +
+        0.2 : (c3_start_time' = min(TOTAL_HOURS, floor(50 + 0.5))) & (c3_initialization_init_done' = true) +
+        0.1 : (c3_start_time' = min(TOTAL_HOURS, floor(50 + 2 * 0.5))) & (c3_initialization_init_done' = true); 
+
+    [] (!c3_initialization_end_done) ->
+        0.1 : (c3_end_time' = max(0, floor(156 - 2 * 0.5))) & (c3_initialization_end_done' = true) +
+        0.2 : (c3_end_time' = max(0, floor(156 - 0.5))) & (c3_initialization_end_done' = true) +
+        0.4 : (c3_end_time' = 156) & (c3_initialization_end_done' = true) +
+        0.2 : (c3_end_time' = min(TOTAL_HOURS, floor(156 + 0.5))) & (c3_initialization_end_done' = true) +
+        0.1 : (c3_end_time' = min(TOTAL_HOURS, floor(156 + 2 * 0.5))) & (c3_initialization_end_done' = true); 
+
+    [] (phase=3) & (!passturn_crop3) & (c3_initialization_end_done) & (c3_initialization_init_done) & (current_time < c3_start_time | c3_irrigate_status = IRRIGATED)->
+        (passturn_crop3' = true);
+
+    [start_irrigate3] (phase=3) & (!passturn_crop3) & (c3_initialization_end_done) & (c3_initialization_init_done) & (current_time = c3_start_time & c3_irrigate_status != IRRIGATING & c3_robot_path_situation < DISTANCE)->
+        (c3_irrigate_status' = IRRIGATING) & (c3_robot_path_situation' = min(c3_robot_path_situation + robot_speed, DISTANCE)) & (passturn_crop3' = true) & (start_time_crop3' = min(start_time, current_time));
+
+    [] (phase=3) & (!passturn_crop3) & (c3_initialization_end_done) & (c3_initialization_init_done) & (c3_irrigate_status = IRRIGATING) & (c3_robot_path_situation < DISTANCE) & (current_time > c3_start_time) & (current_time < c3_end_time) ->
+        (c3_robot_path_situation' = min(c3_robot_path_situation + robot_speed, DISTANCE)) & (passturn_crop3' = true);
+
+    [wait_for_irrigate3] (phase=3) & (!passturn_crop3) & (c3_initialization_end_done) & (c3_initialization_init_done) & (current_time = c3_start_time & c3_irrigate_status != IRRIGATING & c3_robot_path_situation < DISTANCE) ->    (c3_start_time' = min(c3_start_time + 2, c3_end_time-1));
+
+    [release_irrigate3] (phase=3) & (!passturn_crop3) & (c3_initialization_end_done) & (c3_initialization_init_done) & (c3_robot_path_situation = DISTANCE) & (c3_irrigate_status = IRRIGATING) ->
+        (c3_irrigate_status' = IRRIGATED) & (passturn_crop3' = true) & (end_time_crop3' = max(end_time, current_time)) & (c3_update_timespan' = true);
+
+    [release_irrigate3] (phase=3) & (!passturn_crop3) & (c3_initialization_end_done) & (c3_initialization_init_done) & (current_time >= c3_end_time) & (c3_robot_path_situation < DISTANCE) & (c3_irrigate_status = IRRIGATING) ->
+        (c3_irrigate_status' = NOT_AVAILABLE) & (passturn_crop3' = true) & (c3_update_timespan' = true) & (end_time_crop3' = max(end_time, current_time));
+
+    [] (phase=3) & (!passturn_crop3) & (c3_initialization_end_done) & (c3_initialization_init_done) & (c3_robot_path_situation = DISTANCE) & (c3_irrigate_status != IRRIGATING) ->
+        (passturn_crop3' = true);
+
+    [] (phase=3) & (!passturn_crop3) & (c3_initialization_end_done) & (c3_initialization_init_done) & (current_time >= c3_end_time) & (c3_robot_path_situation < DISTANCE) & (c3_irrigate_status != IRRIGATING) ->
+         (passturn_crop3' = true);
+
+     [] (passturn_crop3) -> (phase' = (phase = M ? 0 : phase + 1)) & (passturn_crop3' = false) & (end_time' = c3_update_timespan ? max(end_time, end_time_crop3): end_time) & (start_time' = min(start_time, start_time_crop3));
+endmodule
+
+module robot1
+    robot1_status : [FREE..BROKEN] init FREE;
+    repair_time_robot1 : [0..TOTAL_HOURS] init 0;
+    num_fallos1 : [0..5] init 0;
+
+    [] (phase=0) & (current_time<TOTAL_HOURS) & (num_fallos1<5) & (robot1_status = FREE)->
+        0.1 : (robot1_status'= BROKEN) +
+        0.9 : (robot1_status'= robot1_status) & (repair_time_robot1' = current_time + 2);
+
+    [start_irrigate1] (robot1_status = FREE) -> (robot1_status' = OCCUPIED);
+    [release_irrigate1] (robot1_status = OCCUPIED) -> (robot1_status' = FREE);
+    [wait_for_irrigate1] (robot1_status = BROKEN) -> (robot1_status' = FREE);
+
+    [start_irrigate2] (robot1_status = FREE) -> (robot1_status' = OCCUPIED);
+    [release_irrigate2] (robot1_status = OCCUPIED) -> (robot1_status' = FREE);
+    [wait_for_irrigate2] (robot1_status = BROKEN) -> (robot1_status' = FREE);
+
+    [start_irrigate3] (robot1_status = FREE) -> (robot1_status' = OCCUPIED);
+    [release_irrigate3] (robot1_status = OCCUPIED) -> (robot1_status' = FREE);
+    [wait_for_irrigate3] (robot1_status = BROKEN) -> (robot1_status' = FREE);
+
+endmodule
+
+rewards "total_time"
+    [] phase = 0 & c1_irrigate_status = IRRIGATING : 1;
+    [] phase = 0 & c2_irrigate_status = IRRIGATING : 1;
+    [] phase = 0 & c3_irrigate_status = IRRIGATING : 1;
+endrewards
+
+rewards "total_cost"
+    [] phase = 0 & c1_irrigate_status = IRRIGATING: 100;
+    [] phase = 0 & c2_irrigate_status = IRRIGATING: 100;
+    [] phase = 0 & c3_irrigate_status = IRRIGATING: 100;
+endrewards
+
+rewards "irrigate_timespan"
+    [] (end_time >= start_time & current_time = TOTAL_HOURS & phase = 0) : end_time - start_time;
+endrewards
+
+rewards "total_disruption"
+    [] phase = 0 & c1_irrigate_status = IRRIGATING & (current_time >= c1_start_time & current_time < c1_end_time) : 1;
+    [] phase = 0 & c2_irrigate_status = IRRIGATING & (current_time >= c2_start_time & current_time < c2_end_time) : 1;
+    [] phase = 0 & c3_irrigate_status = IRRIGATING & (current_time >= c3_start_time & current_time < c3_end_time) : 1;
+endrewards
+
+rewards "fully_completed"
+    [release_irrigate3] (c3_robot_path_situation = DISTANCE) & (c3_irrigate_status = IRRIGATING) : 1;
+    [release_irrigate3] (c3_robot_path_situation = DISTANCE) & (c3_irrigate_status = IRRIGATING) : 1;
+    [release_irrigate3] (c3_robot_path_situation = DISTANCE) & (c3_irrigate_status = IRRIGATING) : 1;
+endrewards
