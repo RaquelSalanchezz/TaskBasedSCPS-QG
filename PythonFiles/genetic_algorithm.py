@@ -2,7 +2,7 @@
 
 #import numpy as np
 import random
-
+models_dir='C:/Users/raque/OneDrive/Escritorio/prueba/general_opt_system/models/'
 
 #print("Holaa")
 # Class representing an electric vehicle
@@ -268,6 +268,11 @@ def mutar_hijo(hijo, mutation_rate):
 
 #Generación del modelo PRISM
 def generate_prism_model(vehicles, filename="modelo"):
+    
+    consumer="vehicle"
+    resource="charger"
+    
+    
     # Extraer cargadores de los vehículos
     chargers = {v['charger'] for v in vehicles}
     num_chargers = len(chargers)
@@ -315,10 +320,10 @@ def generate_prism_model(vehicles, filename="modelo"):
         vehicle_id = vehicle['id']
         start_time = vehicle['start_time']
         end_time = vehicle['end_time']
-        model += "module vehicle{0}\n".format(vehicle_id)
-        model += "    passturn_vehicle{0}: bool init false;\n".format(vehicle_id)
-        model += "    start_time_vehicle{0} : [0..TOTAL_HOURS] init TOTAL_HOURS;\n".format(vehicle_id)
-        model += "    end_time_vehicle{0} : [0..TOTAL_HOURS] init 0;\n\n".format(vehicle_id)
+        model += "module {1}{0}\n".format(vehicle_id, consumer)
+        model += "    passturn_{1}{0}: bool init false;\n".format(vehicle_id)
+        model += "    start_time_{1}{0} : [0..TOTAL_HOURS] init TOTAL_HOURS;\n".format(vehicle_id)
+        model += "    end_time_{1}{0} : [0..TOTAL_HOURS] init 0;\n\n".format(vehicle_id)
         
         model += "    v{0}_update_timespan : bool init false;\n".format(vehicle_id)
 
@@ -327,30 +332,30 @@ def generate_prism_model(vehicles, filename="modelo"):
         model += "    v{0}_start_time : [0..TOTAL_HOURS] init {1};\n".format(vehicle_id, start_time)
         model += "    v{0}_end_time : [0..TOTAL_HOURS] init {1};\n\n".format(vehicle_id, end_time)
 
-        model += "    [] (phase={0}) & (!passturn_vehicle{0}) & (current_time < v{0}_start_time | v{0}_charge_status = CHARGED)->\n".format(vehicle_id)
-        model += "        (passturn_vehicle{0}' = true);\n\n".format(vehicle_id)
+        model += "    [] (phase={0}) & (!passturn_{1}{0}) & (current_time < v{0}_start_time | v{0}_charge_status = CHARGED)->\n".format(vehicle_id)
+        model += "        (passturn_{1}{0}' = true);\n\n".format(vehicle_id)
 
-        model += "    [start_charge{0}] (phase={0}) & (!passturn_vehicle{0}) & (current_time = v{0}_start_time & v{0}_charge_status != CHARGING & v{0}_battery < MAX_BAT)->\n".format(vehicle_id)
-        model += "        (v{0}_charge_status' = CHARGING) & (v{0}_battery' = min(v{0}_battery + charge_rate, MAX_BAT)) & (passturn_vehicle{0}' = true) & ".format(vehicle_id)
-        model += "(start_time_vehicle{0}' = min(start_time, current_time));\n\n".format(vehicle_id)
+        model += "    [start_charge{0}] (phase={0}) & (!passturn_{1}{0}) & (current_time = v{0}_start_time & v{0}_charge_status != CHARGING & v{0}_battery < MAX_BAT)->\n".format(vehicle_id)
+        model += "        (v{0}_charge_status' = CHARGING) & (v{0}_battery' = min(v{0}_battery + charge_rate, MAX_BAT)) & (passturn_{1}{0}' = true) & ".format(vehicle_id)
+        model += "(start_time_{1}{0}' = min(start_time, current_time));\n\n".format(vehicle_id)
         
-        model += "    [] (phase={0}) & (!passturn_vehicle{0}) & (v{0}_charge_status = CHARGING) & (v{0}_battery < MAX_BAT) ".format(vehicle_id)
+        model += "    [] (phase={0}) & (!passturn_{1}{0}) & (v{0}_charge_status = CHARGING) & (v{0}_battery < MAX_BAT) ".format(vehicle_id)
         model += "& (current_time > v{0}_start_time) & (current_time < v{0}_end_time) ->\n".format(vehicle_id)
-        model += "        (v{0}_battery' = min(v{0}_battery + charge_rate, 100)) & (passturn_vehicle{0}' = true);\n\n".format(vehicle_id)
+        model += "        (v{0}_battery' = min(v{0}_battery + charge_rate, 100)) & (passturn_{1}{0}' = true);\n\n".format(vehicle_id)
         
-        model += "    [release_charge{0}] (phase={0}) & (!passturn_vehicle{0}) & (v{0}_battery = MAX_BAT) & (v{0}_charge_status = CHARGING) ->\n".format(vehicle_id)
-        model += "        (v{0}_charge_status' = CHARGED) & (passturn_vehicle{0}' = true) & (v{0}_update_timespan' = true);\n\n".format(vehicle_id)
+        model += "    [release_charge{0}] (phase={0}) & (!passturn_{1}{0}) & (v{0}_battery = MAX_BAT) & (v{0}_charge_status = CHARGING) ->\n".format(vehicle_id)
+        model += "        (v{0}_charge_status' = CHARGED) & (passturn_{1}{0}' = true) & (v{0}_update_timespan' = true);\n\n".format(vehicle_id)
 
-        model += "    [release_charge{0}] (phase={0}) & (!passturn_vehicle{0}) & (current_time >= v{0}_end_time) & (v{0}_battery < MAX_BAT) & (v{0}_charge_status = CHARGING)->\n".format(vehicle_id)
-        model += "        (v{0}_charge_status' = NOT_AVAILABLE) & (passturn_vehicle{0}' = true) & (end_time_vehicle{0}' = max(end_time, current_time));\n\n".format(vehicle_id)
+        model += "    [release_charge{0}] (phase={0}) & (!passturn_{1}{0}) & (current_time >= v{0}_end_time) & (v{0}_battery < MAX_BAT) & (v{0}_charge_status = CHARGING)->\n".format(vehicle_id)
+        model += "        (v{0}_charge_status' = NOT_AVAILABLE) & (passturn_{1}{0}' = true) & (end_time_{1}{0}' = max(end_time, current_time));\n\n".format(vehicle_id)
         
-        model += "    [] (phase={0}) & (!passturn_vehicle{0}) & (v{0}_battery = MAX_BAT) & (v{0}_charge_status != CHARGING) ->\n".format(vehicle_id)
-        model += "        (passturn_vehicle{0}' = true);\n\n".format(vehicle_id)
+        model += "    [] (phase={0}) & (!passturn_{1}{0}) & (v{0}_battery = MAX_BAT) & (v{0}_charge_status != CHARGING) ->\n".format(vehicle_id)
+        model += "        (passturn_{1}{0}' = true);\n\n".format(vehicle_id)
 
-        model += "    [] (phase={0}) & (!passturn_vehicle{0}) & (current_time >= v{0}_end_time) & (v{0}_battery < MAX_BAT) & (v{0}_charge_status != CHARGING)->\n ".format(vehicle_id)
-        model += "        (passturn_vehicle{0}' = true);\n\n ".format(vehicle_id)
+        model += "    [] (phase={0}) & (!passturn_{1}{0}) & (current_time >= v{0}_end_time) & (v{0}_battery < MAX_BAT) & (v{0}_charge_status != CHARGING)->\n ".format(vehicle_id)
+        model += "        (passturn_{1}{0}' = true);\n\n ".format(vehicle_id)
 
-        model += "    [] (passturn_vehicle{0}) -> (phase' = (phase = M ? 0 : phase + 1)) & (passturn_vehicle{0}' = false) & (end_time' = v{0}_update_timespan ? max(end_time, end_time_vehicle{0}): end_time) & (start_time' = min(start_time, start_time_vehicle{0}));\n".format(vehicle_id)
+        model += "    [] (passturn_{1}{0}) -> (phase' = (phase = M ? 0 : phase + 1)) & (passturn_{1}{0}' = false) & (end_time' = v{0}_update_timespan ? max(end_time, end_time_vehicle{0}): end_time) & (start_time' = min(start_time, start_time_vehicle{0}));\n".format(vehicle_id)
         model += "endmodule\n\n"
 
     # Módulos de cargadores
@@ -386,7 +391,7 @@ def generate_prism_model(vehicles, filename="modelo"):
     model += "endrewards\n"
 
     try:
-        with open('C:/Users/raque/OneDrive/Escritorio/prueba/hello-world/modelo.prism', 'w') as file:
+        with open(models_dir+'modelop.prism', 'w') as file:
             file.write(model)
             #print(model)
         print("Modelo PRISM guardado en el archivo 'modelo.txt'.")
@@ -407,7 +412,7 @@ num_padres = 3
 mutation_rate = 0.2
 
 # Generate chargers list
-cargadores = [Cargador(1), Cargador(2), Cargador(3), Cargador(4), Cargador(5), Cargador(6), Cargador(7), Cargador(8), Cargador(9), Cargador(10), Cargador(11) ]
+cargadores = [Cargador(1), Cargador(2), Cargador(3), Cargador(4), Cargador(5), Cargador(6) ]
 
 # Example of vehicles and prices per hour - Arrival and departure time with mean and variance
 # Example of vehicles
@@ -448,7 +453,7 @@ def create_vehicles_from_file(file_name):
                 vehicles.append(vehicle)
     return vehicles
 
-file_name = 'C:\\Users\\raque\\OneDrive\\Escritorio\\prueba\\hello-world\\vehiculos.txt'
+file_name = 'C:\\Users\\raque\\OneDrive\\Escritorio\\prueba\\general_opt_system\\data\\vehiculos.txt'
 vehiculos = create_vehicles_from_file(file_name)
 
 # Example of vehicles and prices per hour - Arrival and departure time with mean and variance
@@ -542,3 +547,64 @@ generate_prism_model(list_model_vehicles)
 execution_time = end_time - start_time
 #print(f"Tiempo de ejecución: {execution_time * 1000:.2f} milisegundos")
 print("Tiempo total: " + str(execution_time))
+
+
+
+# STATISTICS TO EVALUATE SOLUTION QUALITY - Uncomment to execute
+# file_name = 'C:\\Users\\raque\\OneDrive\\Escritorio\\prueba\\general_opt_system\\data\\vehiculosprueba.txt'
+# vehiculos2 = create_vehicles_from_file(file_name)
+
+# i=0
+# cont=0
+# vehiculos_noc=0
+# tiempo_real_carga=0
+# coste_real_total = 0
+# coste_real=0
+# coste_penalizacion=0
+# timespan_penalizacion=0
+# for item in mejor_sol[0]:
+
+#   if item.vehiculo.id == vehiculos2[i].id:
+
+#     if item.tiempo_inicio<vehiculos2[i].available_time_start:
+#       cont=cont+1
+#       tiempo_real_carga = item.tiempo_fin - vehiculos2[i].available_time_start
+#       tiempo_real_ini= vehiculos2[i].available_time_start
+
+#       if vehiculos[i].get_charging_time()>tiempo_real_carga:
+#           vehiculos_noc=vehiculos_noc+1
+#           timespan_penalizacion=vehiculos[i].get_charging_time()-tiempo_real_carga
+#           #Para los vehiculos que por llegar tarde no se carguen lo suficiente, se añade una penalización sumando el coste de cargar lo que les falta en el momento más caro del día
+#           #Tiempo que queda x velocidad de carga x precio de hora más cara
+#           coste_penalizacion=coste_penalizacion+(timespan_penalizacion*vehiculos[i].charge_speed)*0.35
+
+#     else:
+#       tiempo_real_carga=item.tiempo_fin-item.tiempo_inicio
+#       tiempo_real_ini=item.tiempo_inicio
+
+#     coste_real=vehiculos[i].get_charging_cost(item.tiempo_inicio, item.tiempo_fin, hourly_prices)
+
+
+#     timespan_inicio=0
+#     timespan_fin=0
+
+#     if i==0:
+#       timespan_inicio=tiempo_real_ini
+
+#     else: timespan_fin=item.tiempo_fin+timespan_penalizacion
+
+#   i=i+1
+#   coste_real_total = coste_real_total + coste_real/2 ++coste_penalizacion
+#   timespan=timespan_fin-timespan_inicio
+
+# print("Número de intentos de carga y que no esté el vehículo")
+# print(cont)
+
+# print("Número de vehículos que no se cargan lo suficiente")
+# print(vehiculos_noc)
+
+# print("Coste real total")
+# print(coste_real_total)
+
+# print("Timespan real")
+# print(timespan)
