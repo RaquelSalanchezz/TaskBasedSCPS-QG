@@ -77,6 +77,7 @@ public class ModelCheckFromFiles {
 	{
 		double cost = -1;
 		double timespan = -1;
+		double ncompleted = -1;
 		List<Double> propiedades = new ArrayList<>();
 		
 		try {
@@ -86,8 +87,9 @@ public class ModelCheckFromFiles {
 			prism.initialise();
 			
 			//Set the model path
-			ModulesFile modulesFile = prism.parseModelFile(new File("C:\\Users\\raque\\OneDrive\\Escritorio\\prueba/hello-world\\modelo.prism"));
+			ModulesFile modulesFile = prism.parseModelFile(new File("C:\\Users\\raque\\OneDrive\\Escritorio\\prueba/general_opt_system\\models\\modelomodelohey.prism"));
 			
+			//Set the properties file path
 			PropertiesFile propertiesFile = prism.parsePropertiesFile(modulesFile, new File("C:\\Users\\raque\\OneDrive\\Escritorio\\propiedades.pctl"));
 			
 			SimulatorEngine simEngine = new SimulatorEngine(prism);
@@ -167,6 +169,42 @@ public class ModelCheckFromFiles {
                 System.err.println("El resultado devuelto no es un array.");
             }
             
+            
+            
+            //--------------------------------------------------
+            
+            // Evaluate properties
+            Object result3 = simEngine.modelCheckMultipleProperties(
+                propertiesFile, 
+                Collections.singletonList(propertiesFile.getProperty(2)), 
+                null, 
+                10000000, 
+                simMethod
+            );
+
+            // Process the result
+            if (result3 instanceof Object[]) {
+                Object[] resultsArray = (Object[]) result3;
+
+                // Verify that the list is not empty and handle the first element
+                if (resultsArray.length > 0 && resultsArray[0] instanceof prism.Result) {
+                    prism.Result propertyResult = (prism.Result) resultsArray[0];
+
+                    // Extract the numeric value of the result
+                    Object rawValue = propertyResult.getResult(); // Este es el valor del resultado
+                    if (rawValue instanceof Number) {
+                        ncompleted = ((Number) rawValue).doubleValue();
+                        System.out.println("Num completed evaluado: " + timespan);
+                    } else {
+                        System.err.println("El valor del resultado no es numérico: " + ncompleted);
+                    }
+                } else {
+                    System.err.println("El resultado no contiene un objeto Result válido.");
+                }
+            } else {
+                System.err.println("El resultado devuelto no es un array.");
+            }
+            
             //--------------------------------------------------
             
             
@@ -184,13 +222,13 @@ public class ModelCheckFromFiles {
 		
 		propiedades.add(cost);
 		propiedades.add(timespan);
+		propiedades.add(ncompleted);
 		
 		//Return the results
 		return propiedades;
 	}	
 	
 }
-
 
 
 
