@@ -22,16 +22,25 @@ This repository contains the following items:
 * `Readme.md`: this file explaning the code of the project
 * `PythonFiles`: this folder contains four files where we can find the clases and the functions needed to execute the algorithms.  
   * `MILP_Algorithm.py`: this file contains the code of the MILP algorithm, that solve the vehicle charging planning problem without considering uncertainty. This algorithm is used as baseline for the experiments.
-  * `Genetic_Algorithm.py `: this file contains the code of the original genetic algorithm, that solve the vehicle charging planning problem considering uncertainty.
-  * `ClasesAG.py`: this file contains the functions that the new Genetic Statistical Model Checking Algorithm (GSMCA) needs to work.
+  * `Genetic_algorithm.py `: this file contains the code of the original genetic algorithm, that solve the vehicle charging planning problem considering uncertainty.
+  * `Classes_generator.py`: this file contains the functions responsible for generate the specific resource and consumer classes that the algorithms need to work.
+  * `Generated_classes.py`: this file includes an example of generated classes for vehicles scenario.
+  * `ClassesAG.py`: this file contains the functions that the new Genetic Statistical Model Checking Algorithm (GSMCA) needs to work.
   * `RunGA.py`: this file contains the code to run the new version of the genetic algorithm using Python.
 * `JavaAlgorithms`: this folder contains the Java project where de  is implemented. In the src package we can find three files:
   * `ExecuteGeneticAlgorithm.java`: this file handles the execution of the GSMCA.
   * `ExecuteMILP.java`: this file is responsible for launching the MILP algorithm from Java.
   * `ModelCheckFromFiles.java`: this file is responsible for evaluate the model launching PRISM. It consist on a version of a PRISM API example adapted to our project.
-*  `Vehicles_Data`: in this folder we can find the data files used to run the experiments.
+*  `Vehicles_Data`: in this folder we can find the data and configuration files used to run the experiments.
     * `example_vehicle_objects.txt`: code that contains the data you can modify and add to the algoritms code to conduct experiments. You can copy and paste all the content or part of it directly in the code.
-    * `vehicles.txt` and `vehiclesdata.txt`: data files used to run the algorithms in the experiments. These are files external to the code.   
+    * `vehicles_X_csv`, `vehicles.txt` and `vehiclesdata.txt`: data files of different problem sizes used to run the algorithms in the experiments. These are files external to the code.
+    * `configuration_vehicles.json`: configuration file for vehicles scenario.
+*  `RoboMAX_Data`: in this folder we can find the data files used to run the experiments.
+    * `patients_X_csv`: data files of different problem sizes used to run the algorithms in the experiments. These are files external to the code.
+    * `config_robots.json`: configuration file for RoboMAX scenario.
+*  `Agriculture_Data`: in this folder we can find the data files used to run the experiments.
+    * `crops_X_csv`: data files of different problem sizes used to run the algorithms in the experiments. These are files external to the code.
+    * `config_agriculture.json`: configuration file for irrigation scenario.   
 * `evaluation_charts.ypinb`: code used to generate the evaluation charts included in the paper.
 
 
