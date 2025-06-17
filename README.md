@@ -47,7 +47,7 @@ This repository contains the following items:
 It is important to note that, depending on the scenario to be tested and the size of the problem to be considered, the paths to the configuration and data files in the code must be modified accordingly.
 
 ## Configuration File Structure
-The configuration files define a standardized schema for modeling resource allocation scenarios, such as electric vehicle charging or robotic patient feeding. Each file describes two main classes: a Consumer (e.g., ElectricVehicle, Patient, Crop) and a Resource (e.g., Charger, Robot), including their attributes and methods.
+The configuration files define a standardized schema for modeling resource allocation scenarios, such as electric vehicle charging or robotic patient feeding. Each file describes two main classes: a **Consumer** (e.g., ElectricVehicle, Patient, Crop) and a **Resource** (e.g., Charger, Robot), including their attributes and methods.
 
 The configuration sets key parameters like the number of entities and resources, their states (AVAILABLE, ACTIVE, DONE), progress tracking variables, speed and capacity values, and action labels (start_action, release_action, action) that drive transitions in the PRISM model. It also includes reward options (e.g., reward_acum, reward_timespan) and specifies the output file name.
 
