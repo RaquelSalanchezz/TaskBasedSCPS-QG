@@ -21,10 +21,10 @@ Python files require the installation of the following libraries for its develop
 This repository contains the following items:
 * `Readme.md`: this file explaning the code of the project
 * `PythonFiles`: this folder contains four files where we can find the clases and the functions needed to execute the algorithms.  
-  * `MILP_Algorithm.py`: this file contains the code of the MILP algorithm, that solve the vehicle charging planning problem without considering uncertainty. This algorithm is used as baseline for the experiments.
+  * `MILP_algorithm.py`: this file contains the code of the MILP algorithm, that solve the vehicle charging planning problem without considering uncertainty. This algorithm is used as baseline for the experiments.
   * `Genetic_algorithm.py `: this file contains the code of the original genetic algorithm, that solve the vehicle charging planning problem considering uncertainty.
-  * `Classes_generator.py`: this file contains the functions responsible for generate the specific resource and consumer classes that the algorithms need to work.
-  * `Generated_classes.py`: this file includes an example of generated classes for vehicles scenario.
+  * `Classes_generator.py`: this file contains the functions responsible for generating the specific resource and consumer classes required by the algorithms.
+  * `Generated_classes.py`: this file includes an example of the generated classes for the vehicles scenario.
   * `ClassesAG.py`: this file contains the functions that the new Genetic Statistical Model Checking Algorithm (GSMCA) needs to work.
   * `RunGA.py`: this file contains the code to run the new version of the genetic algorithm using Python.
 * `JavaAlgorithms`: this folder contains the Java project where de  is implemented. In the src package we can find three files:
@@ -40,7 +40,8 @@ This repository contains the following items:
     * `config_robots.json`: configuration file for RoboMAX scenario.
 *  `Agriculture_Data`: in this folder we can find the data files used to run the experiments.
     * `crops_X_csv`: data files of different problem sizes used to run the algorithms in the experiments. These are files external to the code.
-    * `config_agriculture.json`: configuration file for irrigation scenario.   
+    * `config_agriculture.json`: configuration file for irrigation scenario.
+*  `PRISM_Models`: examples of PRISM models for the different scenarios. 
 * `evaluation_charts.ypinb`: code used to generate the evaluation charts included in the paper.
 
 
