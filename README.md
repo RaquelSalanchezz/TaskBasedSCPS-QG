@@ -44,6 +44,7 @@ This repository contains the following items:
 *  `PRISM_Models`: examples of PRISM models for the different scenarios. 
 * `evaluation_charts.ypinb`: code used to generate the evaluation charts included in the paper.
 
+It is important to note that, depending on the scenario to be tested and the size of the problem to be considered, the paths to the configuration and data files in the code must be modified accordingly.
 
 ## Running the Experiments
 To run the code, you need to do it within Eclipse IDE for Java and Visual Studio Code for Python or similar environment.The following explains how to run algorithms, with the environments previously installed:
@@ -93,6 +94,6 @@ You can also generate the evaluation charts using the code found in evaluation_c
 ## Using the data files and generate your own input data
 As already shown, there are three files within the 'Data' folder containing sample data for running the algorithms.
 * The file `example_vehicle_object.txt` contains example code for creating different objects of the 'Vehicle' class. You can copy and paste its entire content or parts of it to directly create vehicles within the algorithm code without using external files. The file includes up to 150 vehicles and has been used to run various experiments. Each vehicle is initialized with a set of parameters: the vehicle identifier, the distance it has to travel, the approximate arrival and departure times, current load, battery capacity, charging speed, and discharge rate. The parameters are set in that order. Following this structure, we can create new vehicles with new data.
-* On its part, the files `vehicles.txt` and `vehicles_data.txt`. These constitute external data files that you can add to the runtime environment to execute the algorithms. In both files each line represents a vehicle, and each parameter is separated from another by a comma (,). The parameters are defined in the order explained in the previous section. You can create new files following this structure or add new lines to the existing ones to test the algorithms
+* On its part, the rest of txt and csv files constitute external data files that you can add to the runtime environment to execute the algorithms. In both files each line represents a consumer (vehicle, patient, crop depending on the scenario), and each parameter is separated from another by a comma (,). The parameters are defined in the file header. You can create new files following this structure or add new lines to the existing ones to test the algorithms
   
      
