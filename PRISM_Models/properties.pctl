@@ -1,0 +1,8 @@
+// Property to compute the expected total charging cost
+R{"total_cost"} =? [ F (current_time = TOTAL_HOURS) ]
+
+// Property to compute the expected value of the charging timespan at the end of the simulation
+R{"charge_timespan"} =? [ F (current_time = TOTAL_HOURS) ]
+
+// Property to compute the satisfaction level as a percentage (expected reward / M * 100)
+R{"fully_completed"} =? [ F (current_time = TOTAL_HOURS) ]
