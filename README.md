@@ -30,19 +30,21 @@ This repository contains the following items:
 * `JavaAlgorithms`: this folder contains the Java project where de  is implemented. In the src package we can find three files:
   * `ExecuteGeneticAlgorithm.java`: this file handles the execution of the GSMCA.
   * `ExecuteMILP.java`: this file is responsible for launching the MILP algorithm from Java.
-  * `ModelCheckFromFiles.java`: this file is responsible for evaluate the model launching PRISM. It consist on a version of a PRISM API example adapted to our project.
-*  `Vehicles_Data`: in this folder we can find the data and configuration files used to run the experiments.
-    * `example_vehicle_objects.txt`: code that contains the data you can modify and add to the algoritms code to conduct experiments. You can copy and paste all the content or part of it directly in the code.
-    * `vehicles_X_csv`, `vehicles.txt` and `vehiclesdata.txt`: data files of different problem sizes used to run the algorithms in the experiments. These are files external to the code.
-    * `configuration_vehicles.json`: configuration file for vehicles scenario.
-*  `RoboMAX_Data`: in this folder we can find the data files used to run the experiments.
-    * `patients_X_csv`: data files of different problem sizes used to run the algorithms in the experiments. These are files external to the code.
-    * `config_robots.json`: configuration file for RoboMAX scenario.
-*  `Agriculture_Data`: in this folder we can find the data files used to run the experiments.
-    * `crops_X_csv`: data files of different problem sizes used to run the algorithms in the experiments. These are files external to the code.
-    * `config_agriculture.json`: configuration file for irrigation scenario.
-*  `PRISM_Models`: examples of PRISM models for the different scenarios. 
-* `evaluation_charts.ypinb`: code used to generate the evaluation charts included in the paper.
+  * `ModelCheckFromFiles.java`: this file is responsible for evaluate the model launching PRISM. It consist on a version of a PRISM API example adapted to our project.    
+*  `CaseStudies`: in this folder we can find different folders for each case study. 
+    * `Agriculture:` in this folder we can find the data and configuration files and PRISM models (PRISM_models folder) used to run the experiments.
+       * `crops_X_csv`: data files of different problem sizes used to run the algorithms in the experiments. These are files external to the code.
+       * `config_agriculture.json`: configuration file for irrigation scenario.
+    * `RoboMAX:` in this folder we can find the data and configuration files and PRISM models (PRISM_models folder) used to run the experiments.
+        * `patients_X_csv`: data files of different problem sizes used to run the algorithms in the experiments. These are files external to the code.
+        * `config_robots.json`: configuration file for RoboMAX scenario.  
+    * `Vehicles:` in this folder we can find the data and configuration files and PRISM models (PRISM_models folder) used to run the experiments.
+        * `example_vehicle_objects.txt`: code that contains the data you can modify and add to the algoritms code to conduct experiments. You can copy and paste all the content or part of it directly in the code.
+        * `vehicles_X_csv`, `vehicles.txt` and `vehiclesdata.txt`: data files of different problem sizes used to run the algorithms in the experiments. These are files external to the code.
+        * `configuration_vehicles.json`: configuration file for vehicles scenario.
+*  `Doc`:  this folder contains different useful documents.    
+   *  `PRISM_Models`: examples of PRISM models for the different scenarios. 
+   * `evaluation_charts.ypinb`: code used to generate the evaluation charts included in the paper.
 
 It is important to note that, depending on the scenario to be tested and the size of the problem to be considered, the paths to the configuration and data files in the code must be modified accordingly.
 
