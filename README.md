@@ -1,11 +1,11 @@
-# Task Based CPS Planning Quantitative Guarantees under Multiple Sources of Uncertainty
+# Task Based CPS Planning Quantitative Guarantees under Multiple Sources of Uncertainty.
 
-## Abstract
+## Abstract.
 In smart Cyber-Physical Systems (sCPS), planning under uncertainty is a complex challenge addressed through approaches that handle various constraints and uncertainty sources, such as models, environment, sensing, or the temporal availability of components. These methods often (i) address each source of uncertainty separately, (ii) use scalable techniques like genetic algorithms or reinforcement learning, though without guarantees of success, or (iii) employ methods like probabilistic model checking, which provide quantitative guarantees but are not easily scalable.
 
 This paper introduces a method for task-based CPS planning that combines genetic algorithms with statistical model checking to generate scalable plans offering quantitative guarantees under defined levels of uncertainty from multiple sources. The results demonstrate that the proposed approach surpasses a state-of-the-art uncertainty-aware genetic algorithm baseline, delivering stronger assurances of meeting system objectives with a modest increase in computational cost.
 
-## Dependencies
+## Dependencies.
 
 The project is implemented using the latest version of Python (3.12.1) and Java (JDK23). 
 The Java project relies on the following libraries and tools to function correctly:
@@ -17,7 +17,7 @@ Python files require the installation of the following libraries for its develop
 2. **Matplotlib** 3.8.2
 
 
-## Repository structure
+## Repository structure.
 This repository contains the following items:
 * `Readme.md`: this file explaning the code of the project
 * `PythonFiles`: this folder contains four files where we can find the clases and the functions needed to execute the algorithms.  
@@ -48,24 +48,24 @@ This repository contains the following items:
 
 It is important to note that, depending on the scenario to be tested and the size of the problem to be considered, the paths to the configuration and data files in the code must be modified accordingly.
 
-## Configuration File Structure
+## Configuration File Structure.
 The configuration files define a standardized schema for modeling resource allocation scenarios, such as electric vehicle charging or robotic patient feeding. Each file describes two main classes: a **Consumer** (e.g., ElectricVehicle, Patient, Crop) and a **Resource** (e.g., Charger, Robot), including their attributes and methods.
 
 The configuration sets key parameters like the number of entities and resources, their states (AVAILABLE, ACTIVE, DONE), progress tracking variables, speed and capacity values, and action labels (start_action, release_action, action) that drive transitions in the PRISM model. It also includes reward options (e.g., reward_acum, reward_timespan) and specifies the output file name.
 
 This modular design allows the generator to easily adapt to different domains by simply changing the input file, supporting flexibility, reusability, and scalability.
 
-## Running the Experiments
+## Running the Experiments.
 To run the code, you need to do it within Eclipse IDE for Java and Visual Studio Code for Python or similar environment.The following explains how to run algorithms, with the environments previously installed:
 
-### Download and import the Java project from GitHub into Eclipse
+### Download and import the Java project from GitHub into Eclipse.
 1. First, go to the GitHub repository, click on Code, and select Download ZIP. Extract the downloaded ZIP file to your preferred folder. Alternatively, if you have Git installed, you can clone the repository by using the command "git clone" <repository URL> in your terminal.
 
 2. Once you have the project files, open Eclipse and navigate to File > Import > Existing Projects into Workspace. In the dialog that appears, choose Select root directory and browse to the folder where you extracted the project. Then, click Finish to import it into Eclipse.
 
 3. If the project is not recognized as a Java Project, right-click on it in the Project Explorer, go to Configure > Convert to Java Project, and Eclipse will set it up as a Java Project. Additionally, make sure all required dependencies are configured in the Build Path to avoid errors.
 
-### Running the MILP algorithm from Java
+### Running the MILP algorithm from Java.
 1. **Select the file ExecuteMILP.java**
    - Ensure the correct file is open.
 
@@ -83,7 +83,7 @@ To run the code, you need to do it within Eclipse IDE for Java and Visual Studio
 ### Running the Genetic Algorithm from Java
 To run the genetic algorithm you shoud follow the same stages described in the previous section but replacing the MILP algorithm path by the Genetic Algorithm path.
 
-### Running the Genetic Statistical Model Checking Algorithm
+### Running the Genetic Statistical Model Checking Algorithm.
 1. **Select the file ExecuteGeneticAlgorithm.java**
    - Ensure the correct file is open.
      
@@ -97,10 +97,10 @@ To run the genetic algorithm you shoud follow the same stages described in the p
 3. **Compile and Run the Program**
    - Select **Run As > Java Application**.
   
-### Execution of the code to generate the charts
+### Execution of the code to generate the charts.
 You can also generate the evaluation charts using the code found in evaluation_charts.ypinb. To achieve this, simply run the cells in Google Colab or similar environment in order, and various graphs will be displayed as output. If you wish to modify the data to create new graphs, you can do so by editing the data matrices at the beginning of the code that generates each graph.
 
-## Using the data files and generate your own input data
+## Using the data files and generate your own input data.
 As already shown, there are three files within the 'Data' folder containing sample data for running the algorithms.
 * The file `example_vehicle_object.txt` contains example code for creating different objects of the 'Vehicle' class. You can copy and paste its entire content or parts of it to directly create vehicles within the algorithm code without using external files. The file includes up to 150 vehicles and has been used to run various experiments. Each vehicle is initialized with a set of parameters: the vehicle identifier, the distance it has to travel, the approximate arrival and departure times, current load, battery capacity, charging speed, and discharge rate. The parameters are set in that order. Following this structure, we can create new vehicles with new data.
 * On its part, the rest of txt and csv files constitute external data files that you can add to the runtime environment to execute the algorithms. In both files each line represents a consumer (vehicle, patient, crop depending on the scenario), and each parameter is separated from another by a comma (,). The parameters are defined in the file header. You can create new files following this structure or add new lines to the existing ones to test the algorithms
