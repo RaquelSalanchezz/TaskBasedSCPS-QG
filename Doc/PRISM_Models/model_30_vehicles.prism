@@ -1,5 +1,6 @@
 dtmc
 
+
 // Constantes del sistema
 const int N = 4;
 const int M = 30;
