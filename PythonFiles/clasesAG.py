@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+
 import generated_classes
 import random
 
