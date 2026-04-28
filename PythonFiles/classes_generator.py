@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import json
 
+
 config_dir="C:\\Users\\raque\\OneDrive\\Escritorio\\prueba\\general_opt_system\\config_files\\"
 general_dir='C:/Users/raque/OneDrive/Escritorio/prueba/general_opt_system/'
 
